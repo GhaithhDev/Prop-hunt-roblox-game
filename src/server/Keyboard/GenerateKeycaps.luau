@@ -47,6 +47,7 @@ function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart)
             local keycap = keyCaps[randomIndex]:Clone()
             CollectionService:AddTag(keycap, TAGS.KEYCAP)
             keycap:ScaleTo(sizeMulti)
+            keycap:SetAttribute(SIZE_MULTI_ATTRIBUTE, sizeMulti)
             local letter = getRandomLetter()
             keycap.PrimaryPart.SurfaceGui.TextLabel.Text = letter
             keycap.Parent = workspace.Functional.Spawns.Keycaps
