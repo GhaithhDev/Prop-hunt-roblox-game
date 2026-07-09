@@ -10,4 +10,8 @@ return {
 	Treadmill = {
 		ToggleSpawn = { Name = "ToggleSpawn", Type = "Event" },
 	},
+
+	Notifications = {
+		Notify = { Name = "Notify", Type = "Event" },
+	},
 }

@@ -16,6 +16,15 @@ local WinsService = {}
 
 local debounce = {}
 
+local function InitWinPart(part)
+	local stage = WinsConfig.GetWinsForStage(part:GetAttribute("Stage"))
+	if not stage then
+		warn("Stage attribute is not set for ", part)
+		return
+	end
+	part.BillboardGui.AmountofWins.Text = "+" .. stage .. " Wins"
+end
+
 local function OnWinHitboxTouched(part, hit)
 	local character = hit.Parent
 	local player = character and Players:GetPlayerFromCharacter(character)
@@ -47,6 +56,7 @@ end
 
 function WinsService.Start()
 	for _, part in CollectionService:GetTagged(Tags.WIN_PART) do
+		InitWinPart(part)
 		part.Touched:Connect(function(hit)
 			OnWinHitboxTouched(part, hit)
 		end)

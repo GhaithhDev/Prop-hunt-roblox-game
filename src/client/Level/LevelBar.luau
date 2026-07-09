@@ -9,6 +9,8 @@ local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 
 local LocalPlayer = Players.LocalPlayer
 
+local NotificationsController = require(LocalPlayer.PlayerScripts.Client.Notifications.NotificationsController)
+
 local LevelUpSound = SoundService.SFX.Levelup
 
 local LevelBar = {}
@@ -24,6 +26,7 @@ local function UpdateUI(speedValue, levelValue)
 
 	if lastLevel and currentLevel > lastLevel then
 		SoundUtils.PlayLocalSound(LevelUpSound)
+		NotificationsController.NotifyLevelUp(lastLevel, currentLevel)
 	end
 	lastLevel = currentLevel
 

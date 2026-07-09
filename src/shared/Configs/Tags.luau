@@ -5,5 +5,6 @@ Tags.KEYCAP = "Keycap"
 Tags.WIN_PART = "WinHitbox"
 Tags.TREADMILL = "Treadmill"
 Tags.EVENT_TREADMILL = "EventTreadmill"
+Tags.BaseXpOptionPart = "BaseXpOptionPart"
 
 return Tags

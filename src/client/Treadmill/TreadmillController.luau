@@ -9,7 +9,8 @@ local TreadmillController = {}
 
 function TreadmillController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local spawnButton = playerGui:WaitForChild("Main"):WaitForChild("LeftIcons"):WaitForChild("SpawnTreadmil")
+	local spawnButton = playerGui:WaitForChild("Main"):WaitForChild("LeftIcons")
+	:WaitForChild("SpawnTreadmil"):WaitForChild("Button")
 
 	spawnButton.Activated:Connect(function()
 		Net:RemoteEvent("ToggleSpawn"):FireServer()

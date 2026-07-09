@@ -9,6 +9,7 @@ local SoundService = game:GetService("SoundService")
 
 --//Configs
 local SIZE_MULTI_ATTRIBUTE = "KeycapSizeMulti"
+local KeycapConfigs = require(ReplicatedStorage.Shared.Configs.KeycapConfigs)
 local KeycapsConfigs = require(ReplicatedStorage.Shared.Configs.KeycapConfigs)
 local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
 
@@ -113,6 +114,10 @@ local function CheckHitbox(player: Player,character)
     for i = #downKeysTable, 1, -1 do
         local keycap = downKeysTable[i]
         if not currentlyDown[keycap] then
+            local distanceToKeycap = (character:GetPivot().Position - keycap:GetPivot().Position).Magnitude
+            if distanceToKeycap < KeycapConfigs.ReleaseKeyDistance then 
+                continue 
+            end
             if RunService:IsClient() then
                 OnKeycapReleased(keycap)
             end
