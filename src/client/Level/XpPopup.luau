@@ -1,9 +1,15 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+
+local XpPerPress = require(ReplicatedStorage.Shared.Packages.XpPerPress)
+local XpPopupConfig = require(ReplicatedStorage.Shared.Configs.XpPopupConfig)
 
 local LocalPlayer = Players.LocalPlayer
 
 local XpPopup = {}
+
+local lastPopupTime = 0
 
 local OFFSET_MAGNITUDES = { 0.001, 0.1 }
 local BOUNCE_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
@@ -23,11 +29,11 @@ local function FadeOutDescendants(instance, tweenInfo)
 	end
 end
 
-local function SpawnPopup(delta)
+local function SpawnPopup()
 	local clone = popupTemplate:Clone()
 	local plusAmountLabel = clone:FindFirstChild("PlusAmount")
 	if plusAmountLabel then
-		plusAmountLabel.Text = "+" .. tostring(delta)
+		plusAmountLabel.Text = "+" .. tostring(XpPerPress.GetAmountForLocalPlayer())
 	end
 
 	local basePosition = popupTemplate.Position
@@ -61,16 +67,20 @@ function XpPopup.Start()
 	popupTemplate = mainGui:WaitForChild("+XpTemplate")
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
-	local xpValue = playerData:WaitForChild("Xp")
+	local speedValue = playerData:WaitForChild("Speed")
 
-	local lastXp = xpValue.Value
-	xpValue:GetPropertyChangedSignal("Value"):Connect(function()
-		local newXp = xpValue.Value
-		local delta = newXp - lastXp
-		lastXp = newXp
-		if delta > 0 then
-			SpawnPopup(delta)
-		end
+	local lastSpeed = speedValue.Value
+	speedValue:GetPropertyChangedSignal("Value"):Connect(function()
+		local newSpeed = speedValue.Value
+		local delta = newSpeed - lastSpeed
+		lastSpeed = newSpeed
+		if delta <= 0 then return end
+
+		local now = os.clock()
+		if now - lastPopupTime < XpPopupConfig.PopupCooldown then return end
+		lastPopupTime = now
+
+		SpawnPopup()
 	end)
 end
 

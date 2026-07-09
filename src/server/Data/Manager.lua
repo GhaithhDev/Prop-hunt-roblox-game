@@ -78,10 +78,10 @@ function Manager.SetupLeaderstats(Player)
 	Wins.Value = 0
 	Wins.Parent = Leaderstats
 
-	local Xp = Instance.new("NumberValue")
-	Xp.Name = "Xp"
-	Xp.Value = 0
-	Xp.Parent = Leaderstats
+	local Speed = Instance.new("NumberValue")
+	Speed.Name = "Speed"
+	Speed.Value = 0
+	Speed.Parent = Leaderstats
 
 	local Rebirths = Instance.new("NumberValue")
 	Rebirths.Name = "Rebirths"
