@@ -3,6 +3,9 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
 local XpPerPressConfig = require(ReplicatedStorage.Shared.Configs.XpPerPressConfig)
+local RebirthConfig = require(ReplicatedStorage.Shared.Configs.RebirthConfig)
+local TrailsConfig = require(ReplicatedStorage.Shared.Configs.TrailsConfig)
+local AurasConfig = require(ReplicatedStorage.Shared.Configs.AurasConfig)
 
 local XpPerPress = {}
 
@@ -10,15 +13,15 @@ local XpPerPress = {}
 -- swapped for the real calculation once its system is built, without
 -- touching GetAmountForPlayer/GetAmountForLocalPlayer or their callers.
 local function getRebirthMultiplier(stats: { [string]: any }): number
-	return 1
+	return RebirthConfig.GetMultiplierForRebirths(stats.Rebirths or 0)
 end
 
 local function getAurasMultiplier(stats: { [string]: any }): number
-	return 1
+	return AurasConfig.GetMultiplierForEquipped(stats.EquippedAura or "")
 end
 
 local function getTrailsMultiplier(stats: { [string]: any }): number
-	return 1
+	return TrailsConfig.GetMultiplierForEquipped(stats.EquippedTrail or "")
 end
 
 -- Server: reads TreadmillService's live state. Client: reads the replicated
@@ -53,6 +56,9 @@ function XpPerPress.GetAmountForPlayer(player: Player): number
 
 	return calculateAmount({
 		EquippedPressOption = DataManager.Get(player, "EquippedPressOption"),
+		Rebirths = DataManager.Get(player, "Rebirths"),
+		EquippedTrail = DataManager.Get(player, "EquippedTrail"),
+		EquippedAura = DataManager.Get(player, "EquippedAura"),
 		Player = player,
 	})
 end
@@ -66,10 +72,16 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 	local playerData = player and player:FindFirstChild("PlayerData")
 	local equippedValue = playerData and playerData:FindFirstChild("EquippedPressOption")
 	local treadmillMultiplierValue = playerData and playerData:FindFirstChild("TreadmillMultiplier")
+	local rebirthsValue = playerData and playerData:FindFirstChild("Rebirths")
+	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
+	local equippedAuraValue = playerData and playerData:FindFirstChild("EquippedAura")
 
 	return calculateAmount({
 		EquippedPressOption = equippedValue and equippedValue.Value,
 		TreadmillMultiplier = treadmillMultiplierValue and treadmillMultiplierValue.Value,
+		Rebirths = rebirthsValue and rebirthsValue.Value,
+		EquippedTrail = equippedTrailValue and equippedTrailValue.Value,
+		EquippedAura = equippedAuraValue and equippedAuraValue.Value,
 	})
 end
 

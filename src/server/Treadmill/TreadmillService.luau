@@ -7,12 +7,18 @@ local TweenService = game:GetService("TweenService")
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
 local TreadmillConfig = require(ReplicatedStorage.Shared.Configs.TreadmillConfig)
+local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
 local XpPerPress = require(ReplicatedStorage.Shared.Packages.XpPerPress)
 local LevelService = require(ServerScriptService.Server.Level.LevelService)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
+local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
 
 local TreadmillTemplate = ReplicatedStorage.Shared.Assets.Treadmills.PlayerTreadMill
 local SafeZonePart = workspace.Functional.Areas.Safe
+
+local ATTR_REQUIRES_GAMEPASS = "RequiresGamePass"
+local ATTR_GAMEPASS_NAME = "GamePassName"
+local GATE_NOTIFY_DEBOUNCE = 5 -- seconds between repeat notify+prompt for the same locked-out player
 
 local TreadmillService = {}
 
@@ -21,6 +27,7 @@ local ownedTreadmills: { [Player]: Model } = {}
 local runAnimTracks: { [Player]: AnimationTrack } = {}
 local trackedCharacter: { [Player]: Model } = {}
 local standingMultiplier: { [Player]: number } = {}
+local gateDebounce: { [Player]: boolean } = {}
 
 local function isInsideSafeZone(position: Vector3): boolean
 	local halfSize = SafeZonePart.Size / 2
@@ -227,6 +234,19 @@ local function getOrCreateRunTrack(player: Player): AnimationTrack?
 	return track
 end
 
+local function notifyAndPromptLockedTreadmill(plr: Player, passId: string)
+	if gateDebounce[plr] then return end
+	gateDebounce[plr] = true
+	task.delay(GATE_NOTIFY_DEBOUNCE, function()
+		gateDebounce[plr] = nil
+	end)
+
+	local entry = MonetizationConfig.Products[passId]
+	local displayName = entry and entry.Name or passId
+	Net:RemoteEvent("Notify"):FireClient(plr, "error", `You need the {displayName} pass to use this treadmill!`)
+	MonetizationService.PromptPurchase(plr, passId)
+end
+
 local function updateTreadmills()
 	local currentlyStanding: { [Player]: { multiplier: number, treadmill: Model } } = {}
 
@@ -242,9 +262,17 @@ local function updateTreadmills()
 	for _, treadmill in CollectionService:GetTagged(Tags.TREADMILL) do
 		local ownerId = treadmill:GetAttribute("OwnerId")
 		local multiplier = treadmill:GetAttribute("Multiplier") or 1
+		local passId = treadmill:GetAttribute(ATTR_REQUIRES_GAMEPASS) and treadmill:GetAttribute(ATTR_GAMEPASS_NAME)
+
 		for plr in findStandingPlayers(treadmill) do
 			if currentlyStanding[plr] then continue end -- already claimed by a higher-priority event treadmill
 			if ownerId and ownerId ~= 0 and ownerId ~= plr.UserId then continue end -- someone else's personal treadmill: scenery only
+
+			if passId and not MonetizationService.OwnsPass(plr, passId) then
+				notifyAndPromptLockedTreadmill(plr, passId)
+				continue -- locked: no multiplier/XP benefit for non-owners
+			end
+
 			currentlyStanding[plr] = { multiplier = multiplier, treadmill = treadmill }
 		end
 	end
@@ -309,6 +337,7 @@ function TreadmillService.Start()
 		runAnimTracks[player] = nil
 		trackedCharacter[player] = nil
 		standingMultiplier[player] = nil
+		gateDebounce[player] = nil
 	end)
 
 	task.spawn(function()

@@ -6,5 +6,6 @@ Tags.WIN_PART = "WinHitbox"
 Tags.TREADMILL = "Treadmill"
 Tags.EVENT_TREADMILL = "EventTreadmill"
 Tags.BaseXpOptionPart = "BaseXpOptionPart"
+Tags.DeathPart = "DeathPart"
 
 return Tags

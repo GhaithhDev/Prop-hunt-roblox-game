@@ -1,3 +1,5 @@
+require(script.Data.WaitForDataController)
+
 local Controllers = {}
 
 local allControllers = #script:GetDescendants()

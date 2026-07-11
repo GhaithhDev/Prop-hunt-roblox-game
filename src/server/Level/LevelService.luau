@@ -33,4 +33,10 @@ function LevelService.GrantClickXp(player: Player)
 	LevelService.GrantXp(player, XpPerPress.GetAmountForPlayer(player))
 end
 
+function LevelService.ResetProgress(player: Player)
+	DataManager.Set(player, "Level", 1)
+	DataManager.Set(player, "Speed", 0)
+	SpeedService.ResetCustomSpeed(player)
+end
+
 return LevelService
