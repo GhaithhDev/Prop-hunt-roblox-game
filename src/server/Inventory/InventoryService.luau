@@ -5,10 +5,10 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local TrailsConfig = require(ReplicatedStorage.Shared.Configs.TrailsConfig)
 local AurasConfig = require(ReplicatedStorage.Shared.Configs.AurasConfig)
+local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
 
-local OWNED_CATEGORY = "OwnedPasses"
 local TRAIL_ASSETS = ReplicatedStorage.Shared.Assets.Trails
 local AURA_ASSETS = ReplicatedStorage.Shared.Assets.Auras
 
@@ -33,8 +33,14 @@ local function getEquippedKey(category: string): string
 	return category == "Trail" and "EquippedTrail" or "EquippedAura"
 end
 
+-- Maps the Net-remote "Trail"/"Aura" category strings to the plural
+-- MonetizationConfig.GamePasses key names used for ownership tracking.
+local function getGamePassCategory(category: string): string
+	return category == "Trail" and "Trails" or "Auras"
+end
+
 local function getStatus(player: Player)
-	local function buildList(config)
+	local function buildList(config, gamePassCategory)
 		local list = {}
 		for id, item in config.Items do
 			table.insert(list, {
@@ -42,15 +48,15 @@ local function getStatus(player: Player)
 				Name = item.Name,
 				WinsCost = item.WinsCost,
 				Multiplier = item.Multiplier,
-				Owned = DataManager.Owns(player, OWNED_CATEGORY, id),
+				Owned = MonetizationService.OwnsPass(player, gamePassCategory, id),
 			})
 		end
 		return list
 	end
 
 	return {
-		Trails = buildList(TrailsConfig),
-		Auras = buildList(AurasConfig),
+		Trails = buildList(TrailsConfig, "Trails"),
+		Auras = buildList(AurasConfig, "Auras"),
 		EquippedTrail = DataManager.Get(player, "EquippedTrail") or "",
 		EquippedAura = DataManager.Get(player, "EquippedAura") or "",
 	}
@@ -64,7 +70,8 @@ local function onBuyWithWins(player: Player, category: string, itemId: string)
 		return
 	end
 
-	if DataManager.Owns(player, OWNED_CATEGORY, itemId) then
+	local gamePassCategory = getGamePassCategory(category)
+	if MonetizationService.OwnsPass(player, gamePassCategory, itemId) then
 		Net:RemoteEvent("Notify"):FireClient(player, "error", `You already own {item.Name}!`)
 		return
 	end
@@ -76,7 +83,7 @@ local function onBuyWithWins(player: Player, category: string, itemId: string)
 	end
 
 	DataManager.Add(player, "Wins", -item.WinsCost)
-	DataManager.SetOwned(player, OWNED_CATEGORY, itemId, true)
+	MonetizationService.GrantPass(player, gamePassCategory, itemId)
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `Purchased {item.Name}!`)
 end
 
@@ -88,7 +95,19 @@ local function onRequestRobuxPurchase(player: Player, category: string, itemId: 
 		return
 	end
 
-	MonetizationService.PromptPurchase(player, itemId)
+	local gamePassCategory = getGamePassCategory(category)
+	local productId = MonetizationConfig.GamePasses[gamePassCategory][itemId]
+	if not productId or productId == 0 then
+		Net:RemoteEvent("Notify"):FireClient(player, "error", "That item isn't purchasable with Robux yet.")
+		return
+	end
+
+	if MonetizationService.OwnsPass(player, gamePassCategory, itemId) then
+		Net:RemoteEvent("Notify"):FireClient(player, "error", `You already own {item.Name}!`)
+		return
+	end
+
+	MonetizationService.PromptPurchaseById(player, productId)
 end
 
 local function applyEquippedVisuals(player: Player)
@@ -134,7 +153,7 @@ local function onEquipItem(player: Player, category: string, itemId: string)
 		return
 	end
 
-	if not DataManager.Owns(player, OWNED_CATEGORY, itemId) then
+	if not MonetizationService.OwnsPass(player, getGamePassCategory(category), itemId) then
 		Net:RemoteEvent("Notify"):FireClient(player, "error", `You don't own {item.Name} yet!`)
 		return
 	end

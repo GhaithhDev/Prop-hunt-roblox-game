@@ -19,7 +19,6 @@ local function getRandomLetter(): string
 end
 
 function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart)
-   print("Generating keycaps for surface: " .. surface:GetFullName())
    local gridSizeX, gridSizeY = surface.Size.X, surface.Size.Z
    local sizeMulti = surface:GetAttribute(SIZE_MULTI_ATTRIBUTE) or 1
    local keycapSize: number = KeycapsConfigs.KeycapBottomBaseSize * sizeMulti

@@ -3,6 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
+local TeleportConfig = require(ReplicatedStorage.Shared.Configs.TeleportConfig)
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -24,12 +26,24 @@ local function tryShowLivePrice(robuxButton: TextButton, productId: number)
 	end)
 end
 
-local function wireStage(frame: Frame)
-	local stageNumber = tonumber(frame.Name:match("^Stage(%d+)$"))
-	if not stageNumber then return end
+local function wireStage(frame: Frame, item: TeleportConfig.StageEntry)
+	local stageNumber = item.TeleportTo
 
-	local winsButton = frame:FindFirstChild("WinsPrice") and frame.WinsPrice:FindFirstChild("TextButton")
+	local stageNumberLabel = frame:FindFirstChild("StageNumber")
+	if stageNumberLabel and stageNumberLabel:IsA("TextLabel") then
+		stageNumberLabel.Text = `Stage {stageNumber}`
+	end
+
+	frame.BackgroundColor3 = item.UIcolor
+
+	local winsPriceFrame = frame:FindFirstChild("WinsPrice")
+	local winsButton = winsPriceFrame and winsPriceFrame:FindFirstChild("TextButton")
 	if winsButton then
+		local winsLabel = winsButton:FindFirstChildOfClass("TextLabel")
+		if winsLabel then
+			winsLabel.Text = tostring(item.WinsCost)
+		end
+
 		winsButton.Activated:Connect(function()
 			Net:RemoteEvent("RequestWinsTeleport"):FireServer(stageNumber)
 		end)
@@ -42,9 +56,9 @@ local function wireStage(frame: Frame)
 			Net:RemoteEvent("RequestRobuxTeleport"):FireServer(stageNumber)
 		end)
 
-		local productId = frame:GetAttribute("productId")
-		if productId then
-			tryShowLivePrice(robuxButton, productId)
+		local skipProductId = MonetizationConfig.DevProducts.SkipToStage[tostring(stageNumber)]
+		if skipProductId and skipProductId ~= 0 then
+			tryShowLivePrice(robuxButton, skipProductId)
 		end
 	end
 end
@@ -52,11 +66,14 @@ end
 function TeleportController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 	local scrollingFrame = playerGui:WaitForChild("Main"):WaitForChild("TeleportStage"):WaitForChild("ScrollingFrame")
+	local template = scrollingFrame:WaitForChild("UIListLayout"):WaitForChild("StageTemplateFrame")
 
-	for _, frame in scrollingFrame:GetChildren() do
-		if frame:IsA("Frame") then
-			wireStage(frame)
-		end
+	for index, item in TeleportConfig do
+		local clone = template:Clone()
+		clone.Name = `Stage{item.TeleportTo}`
+		clone.LayoutOrder = index
+		clone.Parent = scrollingFrame
+		wireStage(clone, item)
 	end
 end
 

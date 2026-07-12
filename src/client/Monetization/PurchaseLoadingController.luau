@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
-local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
+local MonetizationUtils = require(ReplicatedStorage.Shared.Utils.MonetizationUtils)
 local ConfettiController = require(script.Parent.Parent.Confetti.ConfettiController)
 local NotificationsController = require(script.Parent.Parent.Notifications.NotificationsController)
 
@@ -62,7 +62,7 @@ function PurchaseLoadingController.Show(productId: number)
 	currentProductId = productId
 	overlay.Visible = true
 	overlay.BackgroundTransparency = BASE_DIM_TRANSPARENCY
-	SoundUtils.PlayLocalSound(SoundService.SFX.Info)
+	SoundUtils.PlayLocalSound(SoundService.SFX.Bell)
 
 	spinner.Rotation = 0
 	if spinTween then spinTween:Cancel() end
@@ -164,9 +164,7 @@ function PurchaseLoadingController.Start()
 		PurchaseLoadingController.Hide()
 
 		if isPurchased then
-			local passId = MonetizationConfig.PassIdByProductId[productId]
-			local entry = passId and MonetizationConfig.Products[passId]
-			local displayName = entry and entry.Name or "item"
+			local displayName = MonetizationUtils.GetNameFromId(productId) or "item"
 			NotificationsController.Notify("success", `Purchased {displayName}!`)
 			ConfettiController.Play()
 		end

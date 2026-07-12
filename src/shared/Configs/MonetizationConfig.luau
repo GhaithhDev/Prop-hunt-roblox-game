@@ -1,60 +1,46 @@
---[[
-	Registry of all monetized products.
+-- GamePasses: permanent one-time unlocks (ownership-tracked, idempotent).
+-- Names must be globally unique across all GamePasses categories - they all
+-- write into the same flat DataManager "OwnedPasses" store.
 
-	To add a new permanent one-time-unlock "Pass"
-		1. Create a **Developer Product** on the Creator Dashboard.
-		2. Add an entry below: PassId (must exactly match the `GamePassName`
-		   attribute on any gating Instance), the real ProductId, Type = "Pass",
-		   and a display Name.
-	That's the only change needed - MonetizationService, ProcessReceipt, and
-	PromptPurchase all key off this table generically.
-
-	Consumables (repeatable, non-idempotent purchases) are NOT registered here -
-	they're registered dynamically via MonetizationService.RegisterConsumable
-	instead, since they don't fit this table's "own it or don't" Pass model.
-]]
-
-local TrailsConfig = require(script.Parent.TrailsConfig)
-local AurasConfig = require(script.Parent.AurasConfig)
-
-local MonetizationConfig = {}
-
-export type ProductType = "Pass"
-
-export type ProductEntry = {
-	PassId: string,
-	ProductId: number,
-	Type: ProductType,
-	Name: string,
-}
+-- DevProducts: repeatable/consumable purchases, fulfilled dynamically via
+-- MonetizationService.RegisterConsumable by whichever feature owns them.
 
 -- PLACEHOLDER ProductIds (0) - replace with real Developer Product IDs from
 -- the Creator Dashboard. MonetizationService.Start() warns loudly for any
--- entry still at 0, and PromptPurchase refuses to prompt for one.
-MonetizationConfig.Products = {
-	Gold = { PassId = "Gold", ProductId = 0, Type = "Pass", Name = "Gold Treadmill" },
-	Diamond = { PassId = "Diamond", ProductId = 3609298248, Type = "Pass", Name = "Diamond Treadmill" },
-	Zombie = { PassId = "Zombie", ProductId = 0, Type = "Pass", Name = "Zombie Treadmill" },
-	Admin = { PassId = "Admin", ProductId = 0, Type = "Pass", Name = "Admin Treadmill" },
-} :: { [string]: ProductEntry }
+-- entry still at 0.
+return {
+	GamePasses = {
+		Treadmills = {
+			Gold = 3609493313,
+			Diamond = 3609298248,
+			Zombie = 3609493357,
+			Admin = 3609493388,
+		},
+		Trails = {
+			Ember = 3609493687,
+			Frost = 3609493720,
+			Toxic = 3609494226,
+			Void = 3609494338,
+		},
+		Auras = {
+			Spark = 3609494450,
+			Glow = 3609494511,
+			Storm = 3609494562,
+			Radiant = 3609494603,
+		},
+	},
 
--- Trails/Auras are also permanent Passes (buy once, freely re-equip), so they
--- register here too - generated from TrailsConfig/AurasConfig so adding a new
--- trail/aura there is the only change needed, no manual duplication here.
-for passId, item in TrailsConfig.Items do
-	MonetizationConfig.Products[passId] = { PassId = passId, ProductId = 0, Type = "Pass", Name = item.Name }
-end
-for passId, item in AurasConfig.Items do
-	MonetizationConfig.Products[passId] = { PassId = passId, ProductId = 0, Type = "Pass", Name = item.Name }
-end
-
--- Built once at require-time: ProductId -> PassId (ProcessReceipt only gets a ProductId).
--- Guarded against ProductId == 0 so multiple still-placeholder entries don't collide.
-MonetizationConfig.PassIdByProductId = {}
-for passId, entry in MonetizationConfig.Products do
-	if entry.ProductId ~= 0 then
-		MonetizationConfig.PassIdByProductId[entry.ProductId] = passId
-	end
-end
-
-return MonetizationConfig
+	DevProducts = {
+		RebirthSkip = 3609494646,
+		
+		SkipToStage = {
+			["2"] = 3609491513,
+			["3"] = 3609491647, 
+			["4"] = 3609492814,
+			["5"] = 3609493005,
+			["6"] = 3609493035,
+			["7"] = 3609493067,
+			["8"] = 3609493093,
+		}
+	},
+}

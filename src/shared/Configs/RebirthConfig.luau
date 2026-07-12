@@ -14,11 +14,6 @@ RebirthConfig.Tiers = {
 	[3] = { RequiredLevel = 150, Multiplier = 5 },
 } :: { [number]: Tier }
 
--- PLACEHOLDER (0) - replace with a real Developer Product ID from the Creator
--- Dashboard. One shared product regardless of tier - "Skip Rebirth" always
--- means "pay to complete whichever rebirth is currently pending, right now."
-RebirthConfig.SkipProductId = 0
-
 local maxDefinedTier = 0
 for tierNumber in RebirthConfig.Tiers do
 	maxDefinedTier = math.max(maxDefinedTier, tierNumber)

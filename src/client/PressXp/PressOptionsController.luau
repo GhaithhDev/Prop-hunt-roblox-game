@@ -20,14 +20,20 @@ end
 local function UpdateColors( equippedOption)
 	local equippedName = tostring(equippedOption)
 	local bestOption = XpPerPressConfig.GetBestOptionForWins(LocalPlayer:WaitForChild("PlayerData"):WaitForChild("Wins").Value)
-	
-	for _, part in GetOptions() do
+	local options = GetOptions()
+	for _, part in options do
 		if tonumber(part.Name) > bestOption then
 			part.Color = UNALLOWED_COLOR
 			continue
 		end
 		part.Color = (part.Name == equippedName) and EQUIPPED_COLOR or UNEQUIPPED_COLOR
 	end
+end
+
+local function OnOptionAdded()
+	local playerData = LocalPlayer:WaitForChild("PlayerData")
+	local equippedValue = playerData:WaitForChild("EquippedPressOption")
+	UpdateColors(equippedValue.Value)
 end
 
 function PressOptionsController.Start()
@@ -40,6 +46,8 @@ function PressOptionsController.Start()
 	end)
 
 	UpdateColors(equippedValue.Value)
+
+	CollectionService:GetInstanceAddedSignal(Tags.BaseXpOptionPart):Connect(OnOptionAdded)
 end
 
 return PressOptionsController

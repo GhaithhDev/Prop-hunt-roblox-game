@@ -3,6 +3,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local RebirthConfig = require(ReplicatedStorage.Shared.Configs.RebirthConfig)
+local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local LevelService = require(ServerScriptService.Server.Level.LevelService)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
@@ -54,8 +55,9 @@ local function performRebirth(player: Player)
 end
 
 local function onRequestSkipRebirth(player: Player)
-	if RebirthConfig.SkipProductId == 0 then
-		warn("RebirthService: SkipProductId has a placeholder value (0) - replace it in RebirthConfig before shipping")
+	local skipProductId = MonetizationConfig.DevProducts.RebirthSkip
+	if skipProductId == 0 then
+		warn("RebirthService: DevProducts.RebirthSkip has a placeholder ProductId (0) - replace it in MonetizationConfig before shipping")
 		Net:RemoteEvent("Notify"):FireClient(player, "error", "Skip Rebirth isn't available yet!")
 		return
 	end
@@ -70,7 +72,7 @@ local function onRequestSkipRebirth(player: Player)
 	end
 
 	pendingSkipIntent[player] = nextRebirthNumber
-	MonetizationService.PromptPurchaseById(player, RebirthConfig.SkipProductId)
+	MonetizationService.PromptPurchaseById(player, skipProductId)
 end
 
 local function onSkipPurchased(player: Player, receiptInfo)
@@ -94,8 +96,9 @@ local function onSkipPurchased(player: Player, receiptInfo)
 end
 
 function RebirthService.Start()
-	if RebirthConfig.SkipProductId ~= 0 then
-		MonetizationService.RegisterConsumable(RebirthConfig.SkipProductId, onSkipPurchased)
+	local skipProductId = MonetizationConfig.DevProducts.RebirthSkip
+	if skipProductId ~= 0 then
+		MonetizationService.RegisterConsumable(skipProductId, onSkipPurchased)
 	end
 
 	Net:Handle("GetRebirthStatus", getStatus)

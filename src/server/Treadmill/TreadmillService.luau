@@ -18,7 +18,7 @@ local SafeZonePart = workspace.Functional.Areas.Safe
 
 local ATTR_REQUIRES_GAMEPASS = "RequiresGamePass"
 local ATTR_GAMEPASS_NAME = "GamePassName"
-local GATE_NOTIFY_DEBOUNCE = 5 -- seconds between repeat notify+prompt for the same locked-out player
+local GATE_NOTIFY_DEBOUNCE = 3 -- seconds between repeat notify+prompt for the same locked-out player
 
 local TreadmillService = {}
 
@@ -241,10 +241,12 @@ local function notifyAndPromptLockedTreadmill(plr: Player, passId: string)
 		gateDebounce[plr] = nil
 	end)
 
-	local entry = MonetizationConfig.Products[passId]
-	local displayName = entry and entry.Name or passId
-	Net:RemoteEvent("Notify"):FireClient(plr, "error", `You need the {displayName} pass to use this treadmill!`)
-	MonetizationService.PromptPurchase(plr, passId)
+	local productId = MonetizationConfig.GamePasses.Treadmills[passId]
+	if not productId or productId == 0 then
+		warn(`TreadmillService: "{passId}" has no valid ProductId in MonetizationConfig - not prompting`)
+		return
+	end
+	MonetizationService.PromptPurchaseById(plr, productId)
 end
 
 local function updateTreadmills()
@@ -268,7 +270,7 @@ local function updateTreadmills()
 			if currentlyStanding[plr] then continue end -- already claimed by a higher-priority event treadmill
 			if ownerId and ownerId ~= 0 and ownerId ~= plr.UserId then continue end -- someone else's personal treadmill: scenery only
 
-			if passId and not MonetizationService.OwnsPass(plr, passId) then
+			if passId and not MonetizationService.OwnsPass(plr, "Treadmills", passId) then
 				notifyAndPromptLockedTreadmill(plr, passId)
 				continue -- locked: no multiplier/XP benefit for non-owners
 			end
