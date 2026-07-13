@@ -62,6 +62,7 @@ end
 function GenerateKeycaps.Start()
     for _, surface in pairs(CollectionService:GetTagged(TAGS.GENERATE_KEYCAPS_SURFACE)) do
         GenerateKeycaps.GenerateKeycapsFromSurface(surface)
+        task.wait(.002)
     end
 end
 

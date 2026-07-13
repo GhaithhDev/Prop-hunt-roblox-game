@@ -20,6 +20,7 @@ local Players = game:GetService("Players")
 
 local PathfindingAgent = require(script.Parent.Parent.PathfindingAgent)
 local DeathService = require(ServerScriptService.Server.Death.DeathService)
+local AnimationService = require(ServerScriptService.Server.Animation.AnimationService)
 
 local NPCAssets = ReplicatedStorage.Shared.Assets.NPCs
 
@@ -70,6 +71,29 @@ local function killOverlappingPlayers(state)
 	end
 end
 
+local function isMovingMode(mode: string): boolean
+	return mode == "Chasing" or mode == "ReturningToSpawn"
+end
+
+-- Only touches animations when "moving-ness" actually flips - Chasing and
+-- ReturningToSpawn both keep ZombieWalk running uninterrupted since they're
+-- both "moving" states.
+local function setMode(state, newMode: string)
+	if state.mode == newMode then return end
+
+	local wasMoving = isMovingMode(state.mode)
+	local isMoving = isMovingMode(newMode)
+	state.mode = newMode
+
+	if isMoving and not wasMoving then
+		AnimationService.Stop(state.model, "ZombieIdle")
+		AnimationService.Resume(state.model, "ZombieWalk")
+	elseif not isMoving and wasMoving then
+		AnimationService.Stop(state.model, "ZombieWalk")
+		AnimationService.Resume(state.model, "ZombieIdle")
+	end
+end
+
 -- Closest alive player whose root is inside this zombie's AttackRange part.
 local function getClosestPlayerInRange(state): BasePart?
 	local bestRoot: BasePart? = nil
@@ -110,13 +134,13 @@ local function think(state)
 
 	local target = getClosestPlayerInRange(state)
 	if target then
-		state.mode = "Chasing"
+		setMode(state, "Chasing")
 		state.target = target
 	elseif horizontalDistance(root.Position, state.spawnPosition) <= ARRIVE_EPSILON then
-		state.mode = "Idle"
+		setMode(state, "Idle")
 		state.target = nil
 	else
-		state.mode = "ReturningToSpawn"
+		setMode(state, "ReturningToSpawn")
 		state.target = nil
 	end
 end
@@ -176,6 +200,16 @@ local function spawnZombieAt(part: BasePart)
 	state.attackRangePart = attackRangePart
 	state.stageNumber = part:GetAttribute("Stage")
 	state.thinkInterval = THINK_INTERVAL_MIN + math.random() * (THINK_INTERVAL_MAX - THINK_INTERVAL_MIN)
+
+	-- Warm up both loops once (forces the tracks to load) then immediately
+	-- silence them; explicitly resume Idle to match the starting state.mode -
+	-- setMode only fires Play/Stop calls on an actual transition, so without
+	-- this nothing would be playing at all until the first state change.
+	AnimationService.Play(state.model, "ZombieIdle", true, Enum.AnimationPriority.Idle)
+	AnimationService.Play(state.model, "ZombieWalk", true, Enum.AnimationPriority.Movement)
+	AnimationService.Stop(state.model, "ZombieIdle")
+	AnimationService.Stop(state.model, "ZombieWalk")
+	AnimationService.Resume(state.model, "ZombieIdle")
 
 	pcall(think, state) -- set a correct initial state before the loop starts
 	task.spawn(PathfindingAgent.RunLoop, state, think, locomote, state.thinkInterval, LOCOMOTION_STEP)

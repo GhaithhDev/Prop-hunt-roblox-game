@@ -54,4 +54,10 @@ return {
 		ShowRevivePopup = { Name = "ShowRevivePopup", Type = "Event" },
 		RequestRevive = { Name = "RequestRevive", Type = "Event" },
 	},
+
+	Animations = {
+		PlayAnimation = { Name = "PlayAnimation", Type = "Event" },
+		StopAnimation = { Name = "StopAnimation", Type = "Event" },
+		ResumeAnimation = { Name = "ResumeAnimation", Type = "Event" },
+	},
 }
