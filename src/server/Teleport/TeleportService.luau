@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -11,6 +12,12 @@ local TELEPORT_OFFSET = Vector3.new(0, 3, 0)
 local WINS_KEY = "Wins"
 
 local TeleportService = {}
+
+-- ReviveToPreviousStage is a single shared ProductId across every stage (unlike
+-- SkipToStage's per-stage IDs), so ProcessReceipt alone can't tell which stage
+-- a given purchase was for - remember it per-player between the prompt and the
+-- purchase confirming.
+local pendingRevive: { [Player]: number } = {}
 
 -- TeleportConfig is the single source of truth for Wins pricing (shared with
 -- TeleportController, which generates the stage frames from the same config)
@@ -77,6 +84,36 @@ local function onRequestRobuxTeleport(player: Player, stageNumber: number)
 	MonetizationService.PromptPurchaseById(player, skipProductId)
 end
 
+-- Revive is priced independently from (and cheaper than) Skip to Stage, via
+-- one shared DevProduct for every stage - not tied to TeleportConfig's
+-- Wins-price entries, just to whichever stage the player died on.
+local function onRequestRevive(player: Player, stageNumber: number)
+	stageNumber = tonumber(stageNumber) :: number
+
+	local reviveProductId = MonetizationConfig.DevProducts.ReviveToPreviousStage
+	if not reviveProductId or reviveProductId == 0 then
+		warn("TeleportService: DevProducts.ReviveToPreviousStage has a placeholder ProductId (0) - replace it in MonetizationConfig before shipping")
+		Net:RemoteEvent("Notify"):FireClient(player, "error", "Revive isn't available yet!")
+		return
+	end
+
+	pendingRevive[player] = stageNumber
+	MonetizationService.PromptPurchaseById(player, reviveProductId)
+end
+
+local function onRevivePurchased(player: Player)
+	local stageNumber = pendingRevive[player]
+	pendingRevive[player] = nil
+
+	if not stageNumber then
+		warn(`TeleportService: revive purchase confirmed for {player.Name} but no pendingRevive - skipping teleport`)
+		return
+	end
+
+	teleportPlayerToStage(player, stageNumber)
+	Net:RemoteEvent("Notify"):FireClient(player, "success", `Revived at Stage {stageNumber}!`)
+end
+
 function TeleportService.Start()
 	-- Each stage has its own distinct ProductId, so the registered handler
 	-- already knows which stage it's for - no need to track per-player intent.
@@ -90,8 +127,18 @@ function TeleportService.Start()
 		end
 	end
 
+	local reviveProductId = MonetizationConfig.DevProducts.ReviveToPreviousStage
+	if reviveProductId and reviveProductId ~= 0 then
+		MonetizationService.RegisterConsumable(reviveProductId, onRevivePurchased)
+	end
+
 	Net:Connect("RequestWinsTeleport", onRequestWinsTeleport)
 	Net:Connect("RequestRobuxTeleport", onRequestRobuxTeleport)
+	Net:Connect("RequestRevive", onRequestRevive)
+
+	Players.PlayerRemoving:Connect(function(player)
+		pendingRevive[player] = nil
+	end)
 end
 
 return TeleportService

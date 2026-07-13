@@ -49,4 +49,9 @@ return {
 		RequestRobuxPurchase = { Name = "RequestRobuxPurchase", Type = "Event" },
 		EquipItem = { Name = "EquipItem", Type = "Function" },
 	},
+
+	Death = {
+		ShowRevivePopup = { Name = "ShowRevivePopup", Type = "Event" },
+		RequestRevive = { Name = "RequestRevive", Type = "Event" },
+	},
 }

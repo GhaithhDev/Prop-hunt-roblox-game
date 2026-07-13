@@ -165,7 +165,6 @@ function PurchaseLoadingController.Start()
 
 		if isPurchased then
 			local displayName = MonetizationUtils.GetNameFromId(productId) or "item"
-			NotificationsController.Notify("success", `Purchased {displayName}!`)
 			ConfettiController.Play()
 		end
 	end)
