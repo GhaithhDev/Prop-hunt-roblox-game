@@ -145,6 +145,8 @@ local function applyEquippedVisuals(player: Player)
 	end
 end
 
+-- Clicking Equip on an already-equipped item unequips it instead - same
+-- remote handles both, toggled off the currently-equipped id.
 local function onEquipItem(player: Player, category: string, itemId: string)
 	local config = getConfig(category)
 	local item = config and config.Items[itemId]
@@ -158,9 +160,18 @@ local function onEquipItem(player: Player, category: string, itemId: string)
 		return
 	end
 
-	DataManager.Set(player, getEquippedKey(category), itemId)
-	applyEquippedVisuals(player)
-	Net:RemoteEvent("Notify"):FireClient(player, "success", `Equipped {item.Name}!`)
+	local equippedKey = getEquippedKey(category)
+	local isCurrentlyEquipped = DataManager.Get(player, equippedKey) == itemId
+
+	if isCurrentlyEquipped then
+		DataManager.Set(player, equippedKey, "")
+		applyEquippedVisuals(player)
+		Net:RemoteEvent("Notify"):FireClient(player, "success", `Unequipped {item.Name}!`)
+	else
+		DataManager.Set(player, equippedKey, itemId)
+		applyEquippedVisuals(player)
+		Net:RemoteEvent("Notify"):FireClient(player, "success", `Equipped {item.Name}!`)
+	end
 end
 
 local function onCharacterAdded(player: Player, character: Model)

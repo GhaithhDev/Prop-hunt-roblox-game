@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
 local XpPerPressConfig = require(ReplicatedStorage.Shared.Configs.XpPerPressConfig)
 local RebirthConfig = require(ReplicatedStorage.Shared.Configs.RebirthConfig)
@@ -41,9 +42,41 @@ local function getTreadmillMultiplier(stats: { [string]: any }): number
 	return stats.TreadmillMultiplier or 1
 end
 
+-- Server: reads XpBoostService's live state. Client: reads the replicated
+-- PlayerData.XpBoostRemainingSeconds value XpBoostService syncs every second
+-- while active (display/prediction only — the server path below is what
+-- actually grants XP).
+local function getXpBoostMultiplier(stats: { [string]: any }): number
+	if RunService:IsServer() then
+		local player = stats.Player
+		if not player then
+			return 1
+		end
+		-- Required inline (not at module top-level) to avoid a circular require:
+		-- XpBoostService requires XpPerPress at its own top level.
+		local XpBoostService = require(game:GetService("ServerScriptService").Server.XpBoost.XpBoostService)
+		return XpBoostService.HasActiveBoost(player) and 2 or 1
+	end
+	return (stats.XpBoostRemainingSeconds or 0) > 0 and 2 or 1
+end
+
+-- Server-global, not per-player - reads ServerBoostService's live state
+-- directly on the server, and the replicated workspace attribute it syncs
+-- on the client. No stats.Player/PlayerData lookup needed either way, since
+-- every player sees the same value.
+local function getServerBoostMultiplier(): number
+	if RunService:IsServer() then
+		-- Required inline (not at module top-level) to avoid a circular require:
+		-- ServerBoostService requires XpPerPress at its own top level.
+		local ServerBoostService = require(game:GetService("ServerScriptService").Server.ServerBoost.ServerBoostService)
+		return ServerBoostService.GetMultiplier()
+	end
+	return Workspace:GetAttribute("ServerBoostMultiplier") or 1
+end
+
 local function calculateAmount(stats: { [string]: any }): number
 	local baseAmount = XpPerPressConfig.GetStepAmount(stats.EquippedPressOption or XpPerPressConfig.DefaultOption)
-	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats)
+	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats) * getXpBoostMultiplier(stats) * getServerBoostMultiplier()
 	return math.floor(baseAmount * multiplier)
 end
 
@@ -75,10 +108,12 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 	local rebirthsValue = playerData and playerData:FindFirstChild("Rebirths")
 	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
 	local equippedAuraValue = playerData and playerData:FindFirstChild("EquippedAura")
+	local xpBoostRemainingValue = playerData and playerData:FindFirstChild("XpBoostRemainingSeconds")
 
 	return calculateAmount({
 		EquippedPressOption = equippedValue and equippedValue.Value,
 		TreadmillMultiplier = treadmillMultiplierValue and treadmillMultiplierValue.Value,
+		XpBoostRemainingSeconds = xpBoostRemainingValue and xpBoostRemainingValue.Value,
 		Rebirths = rebirthsValue and rebirthsValue.Value,
 		EquippedTrail = equippedTrailValue and equippedTrailValue.Value,
 		EquippedAura = equippedAuraValue and equippedAuraValue.Value,

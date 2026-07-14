@@ -9,6 +9,7 @@ local Template = {
 	ProcessedPurchaseIds = {},
 	EquippedTrail = "",
 	EquippedAura = "",
+	XpBoostExpiresAt = 0,
 }
 
 return Template

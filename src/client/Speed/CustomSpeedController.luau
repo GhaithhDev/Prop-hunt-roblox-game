@@ -27,7 +27,8 @@ end
 
 function CustomSpeedController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local speedSettings = playerGui:WaitForChild("Main"):WaitForChild("SpeedSettings")
+	local speedSettings = playerGui:WaitForChild("Main"):WaitForChild("RightIcons")
+	:WaitForChild("SpeedSettings")
 	local maxSpeedLabel = speedSettings:WaitForChild("MaxSpeedLabel")
 	local speedInput = speedSettings:WaitForChild("SpeedInput")
 	local currentSpeedLabel = speedSettings:WaitForChild("CurretnSpeed")

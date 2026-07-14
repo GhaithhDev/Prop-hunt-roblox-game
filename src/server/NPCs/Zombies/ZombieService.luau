@@ -27,7 +27,7 @@ local NPCAssets = ReplicatedStorage.Shared.Assets.NPCs
 -- Cadences
 local THINK_INTERVAL_MIN = 0.08 -- target selection / state decision (randomized - staggers the horde)
 local THINK_INTERVAL_MAX = 0.15
-local LOCOMOTION_STEP = 0.05 -- steer / repath-staleness check / kill-box check
+local LOCOMOTION_STEP = 0.05 -- steer / repath-staleness check
 
 -- Movement/combat (placeholders - tune freely)
 local REPATH_DISTANCE = 6 -- only recompute a path once the target has drifted this far (studs)
@@ -52,23 +52,14 @@ local function horizontalDistance(a: Vector3, b: Vector3): number
 	return Vector2.new(a.X - b.X, a.Z - b.Z).Magnitude
 end
 
--- Kills every player whose character overlaps the zombie's own bounding box
--- (contact-based, not a distance threshold).
-local function killOverlappingPlayers(state)
-	local boundingCFrame, boundingSize = state.model:GetBoundingBox()
+-- Kills whichever player touches any of the zombie's parts (event-driven,
+-- connected once per spawn - see spawnZombieAt).
+local function killTouchingPlayer(hit: BasePart, stageNumber: any)
+	local character = hit.Parent
+	local player = character and Players:GetPlayerFromCharacter(character)
+	if not player then return end
 
-	local params = OverlapParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { state.model }
-
-	local parts = workspace:GetPartBoundsInBox(boundingCFrame, boundingSize, params)
-	for _, part in parts do
-		local character = part:FindFirstAncestorOfClass("Model")
-		local player = character and Players:GetPlayerFromCharacter(character)
-		if player then
-			DeathService.KillPlayer(player, state.stageNumber)
-		end
-	end
+	DeathService.KillPlayer(player, stageNumber)
 end
 
 local function isMovingMode(mode: string): boolean
@@ -160,7 +151,6 @@ local function locomote(state)
 		if not (target and target.Parent) then return end
 
 		PathfindingAgent.MoveToward(state, target.Position, { repathDistance = REPATH_DISTANCE })
-		killOverlappingPlayers(state)
 	elseif state.mode == "ReturningToSpawn" then
 		PathfindingAgent.MoveToward(state, state.spawnPosition, { repathDistance = REPATH_DISTANCE })
 	elseif state.mode == "Idle" then
@@ -200,6 +190,14 @@ local function spawnZombieAt(part: BasePart)
 	state.attackRangePart = attackRangePart
 	state.stageNumber = part:GetAttribute("Stage")
 	state.thinkInterval = THINK_INTERVAL_MIN + math.random() * (THINK_INTERVAL_MAX - THINK_INTERVAL_MIN)
+
+	for _, descendant in state.model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.Touched:Connect(function(hit)
+				killTouchingPlayer(hit, state.stageNumber)
+			end)
+		end
+	end
 
 	-- Warm up both loops once (forces the tracks to load) then immediately
 	-- silence them; explicitly resume Idle to match the starting state.mode -

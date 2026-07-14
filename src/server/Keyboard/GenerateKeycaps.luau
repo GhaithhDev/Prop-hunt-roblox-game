@@ -18,7 +18,9 @@ local function getRandomLetter(): string
 	return string.char(math.random(65, 90)) -- "A" to "Z"
 end
 
-function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart)
+-- Pure arithmetic (no instance creation) - safe to call cheaply for a
+-- total-count pre-pass ahead of the real generation loop, see Start().
+local function computeGridDimensions(surface: BasePart): (number, number)
    local gridSizeX, gridSizeY = surface.Size.X, surface.Size.Z
    local sizeMulti = surface:GetAttribute(SIZE_MULTI_ATTRIBUTE) or 1
    local keycapSize: number = KeycapsConfigs.KeycapBottomBaseSize * sizeMulti
@@ -27,6 +29,14 @@ function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart)
    local desiredStep = keycapSize + padding
    local columns = math.max(1, math.round(gridSizeX / desiredStep))
    local rows = math.max(1, math.round(gridSizeY / desiredStep))
+   return rows, columns
+end
+
+function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart, onKeycapGenerated: (() -> ())?)
+   local gridSizeX, gridSizeY = surface.Size.X, surface.Size.Z
+   local sizeMulti = surface:GetAttribute(SIZE_MULTI_ATTRIBUTE) or 1
+   local keycapSize: number = KeycapsConfigs.KeycapBottomBaseSize * sizeMulti
+   local rows, columns = computeGridDimensions(surface)
    local stepX = gridSizeX / columns
    local stepZ = gridSizeY / rows
 
@@ -55,15 +65,40 @@ function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart)
             localPosition -= surface.CFrame.LookVector * (i * (stepZ) - (stepZ)/2)
             keycap:PivotTo(CFrame.new(localPosition))
             Vector3Utils.setModelUpVector(keycap,surface.CFrame.UpVector)
+            if onKeycapGenerated then
+                onKeycapGenerated()
+            end
         end
    end
 end
 
 function GenerateKeycaps.Start()
-    for _, surface in pairs(CollectionService:GetTagged(TAGS.GENERATE_KEYCAPS_SURFACE)) do
-        GenerateKeycaps.GenerateKeycapsFromSurface(surface)
+    local surfaces = CollectionService:GetTagged(TAGS.GENERATE_KEYCAPS_SURFACE)
+
+    local totalKeycaps = 0
+    for _, surface in surfaces do
+        local rows, columns = computeGridDimensions(surface)
+        totalKeycaps += rows * columns
+    end
+
+    local generatedCount = 0
+    local lastPercent = -1
+    local function onKeycapGenerated()
+        generatedCount += 1
+        local percent = totalKeycaps > 0 and math.floor((generatedCount / totalKeycaps) * 100) or 100
+        if percent ~= lastPercent then
+            lastPercent = percent
+            workspace:SetAttribute("KeycapsGenerationProgress", percent)
+        end
+    end
+
+    for _, surface in surfaces do
+        GenerateKeycaps.GenerateKeycapsFromSurface(surface, onKeycapGenerated)
         task.wait(.002)
     end
+
+    workspace:SetAttribute("KeycapsGenerationProgress", 100)
+    workspace:SetAttribute("KeycapsGenerated", true)
 end
 
 return GenerateKeycaps

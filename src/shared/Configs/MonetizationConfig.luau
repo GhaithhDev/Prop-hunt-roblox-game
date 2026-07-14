@@ -43,6 +43,12 @@ return {
 			["8"] = 3609493093,
 		},
 
-		ReviveToPreviousStage = 3609681251
+		ReviveToPreviousStage = 3609681251,
+
+		XpBoost = {
+			3609881067,
+			3609881433,
+			3609881495
+		}
 	},
 }

@@ -60,4 +60,14 @@ return {
 		StopAnimation = { Name = "StopAnimation", Type = "Event" },
 		ResumeAnimation = { Name = "ResumeAnimation", Type = "Event" },
 	},
+
+	Shop = {
+		RequestXpBoost = { Name = "RequestXpBoost", Type = "Event" },
+		RequestGamePassPurchase = { Name = "RequestGamePassPurchase", Type = "Event" },
+		-- Function (not Event) so the client can await the answer before
+		-- marking Treadmill tiles owned - same reasoning as Inventory's
+		-- GetInventoryStatus.
+		GetShopStatus = { Name = "GetShopStatus", Type = "Function" },
+		RequestServerBoost = { Name = "RequestServerBoost", Type = "Event" },
+	},
 }
