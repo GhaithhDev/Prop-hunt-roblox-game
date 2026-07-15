@@ -9,7 +9,7 @@ local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService
 local SpeedService = require(ServerScriptService.Server.Speed.SpeedService)
 
 local Players = game:GetService("Players")
-local Key = RunService:IsStudio() and "Studio_Store_15" or "Test_Store_3"
+local Key = RunService:IsStudio() and "Studio_Store_16" or "Test_Store_4"
 
 local PlayerStore = ProfileStore.New(Key, PROFILE_TEMPLATE)
 
