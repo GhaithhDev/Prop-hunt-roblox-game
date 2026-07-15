@@ -23,8 +23,20 @@ local function getShopStatus(player: Player)
 		treadmills[passId] = MonetizationService.OwnsPass(player, "Treadmills", passId)
 	end
 
+	local speedPass = {}
+	for passId in MonetizationConfig.GamePasses.SpeedPass or {} do
+		speedPass[passId] = MonetizationService.OwnsPass(player, "SpeedPass", passId)
+	end
+
+	local keycapSounds = {}
+	for passId in MonetizationConfig.GamePasses.KeycapSounds or {} do
+		keycapSounds[passId] = MonetizationService.OwnsPass(player, "KeycapSounds", passId)
+	end
+
 	return {
 		Treadmills = treadmills,
+		SpeedPass = speedPass,
+		KeycapSounds = keycapSounds,
 	}
 end
 

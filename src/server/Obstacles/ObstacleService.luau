@@ -2,14 +2,18 @@
 	ObstacleService
 
 	Spawns a repeating hazard on each Workspace.Functional.ObstaclePaths lane:
-	clone ModelName's asset at StartCFrame, slide it in a straight line to
-	EndCFrame at a constant Speed studs/sec via ReplicatedTween (smooth on
-	every client, not just steppy server-tick-rate motion), and kill any
+	clone ModelName's asset at StartCFrame and slide it via ReplicatedTween
+	(smooth on every client, not just steppy server-tick-rate motion) through
+	StartCFrame -> EndCFrame, or through an optional MidCFrame waypoint in
+	between if the lane has one, at a constant Speed studs/sec - except the
+	Start->Mid leg, which uses the lane's optional FirstPathSpeed instead of
+	Speed if a MidCFrame is present and FirstPathSpeed is set. Kills any
 	player it touches - same DeathService.KillPlayer path DeathParts and
 	zombie contact already use, passing the lane's Stage attribute through so
 	the Revive banner offers the right stage. If the lane's Reverse attribute
-	is true, the obstacle slides back to StartCFrame after reaching the end
-	instead of just despawning there.
+	is true, the obstacle slides back through the same waypoints (each
+	segment at its own speed, in both directions) to StartCFrame after
+	reaching the end instead of just despawning there.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -33,7 +37,15 @@ local function killTouchingPlayer(hit: BasePart, stageNumber: any)
 	DeathService.KillPlayer(player, stageNumber)
 end
 
-local function spawnObstacle(laneName: string, template: Model, startCFrame: CFrame, endCFrame: CFrame, speed: number, reverses: boolean, stageNumber: any)
+-- waypoints is the one-way path (Start -> [Mid ->] End); legSpeeds has one
+-- entry per segment (#waypoints - 1) - lets a lane's optional FirstPathSpeed
+-- give the Start->Mid leg a different speed than the rest. Reversing plays
+-- back through the same waypoints/speeds in reverse instead of relying on
+-- TweenInfo's native Reverses flag, since that can only bounce a single leg
+-- back to its own start - it can't express a 3+ point path. Every leg is a
+-- one-shot ReplicatedTween.Tween (RepeatCount=0, Reverses=false) chained via
+-- task.delay, which keeps each leg phase-accurate for late-joining clients.
+local function spawnObstacle(laneName: string, template: Model, waypoints: { CFrame }, legSpeeds: { number }, reverses: boolean, stageNumber: any)
 	local clone = template:Clone()
 	if not clone.PrimaryPart then
 		clone.PrimaryPart = clone:FindFirstChildWhichIsA("BasePart", true)
@@ -44,7 +56,7 @@ local function spawnObstacle(laneName: string, template: Model, startCFrame: CFr
 		return
 	end
 
-	clone:PivotTo(startCFrame)
+	clone:PivotTo(waypoints[1])
 	clone.Parent = obstaclesFolder
 
 	for _, part in clone:GetDescendants() do
@@ -55,20 +67,49 @@ local function spawnObstacle(laneName: string, template: Model, startCFrame: CFr
 		end
 	end
 
-	local distance = (endCFrame.Position - startCFrame.Position).Magnitude
-	local duration = distance / speed
+	local legs = waypoints
+	local speeds = legSpeeds
+	if reverses then
+		legs = table.clone(waypoints)
+		for i = #waypoints - 1, 1, -1 do
+			table.insert(legs, waypoints[i])
+		end
 
-	ReplicatedTween.Tween(
-		clone.PrimaryPart,
-		TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 0, reverses),
-		{ CFrame = endCFrame }
-	)
+		-- Each physical segment keeps its own speed regardless of travel
+		-- direction, so the return trip's speeds are the full forward list
+		-- reversed (not trimmed like legs - there's no shared element here).
+		speeds = table.clone(legSpeeds)
+		for i = #legSpeeds, 1, -1 do
+			table.insert(speeds, legSpeeds[i])
+		end
+	end
 
-	-- Reversing plays the same leg twice (there and back) - destroying the
-	-- clone after only one leg's duration would pop it out of existence
-	-- mid-reverse.
-	local lifetime = reverses and (duration * 2) or duration
-	task.delay(lifetime, function()
+	local totalDuration = 0
+	for i = 1, #legs - 1 do
+		totalDuration += (legs[i + 1].Position - legs[i].Position).Magnitude / speeds[i]
+	end
+
+	local function playLeg(index: number)
+		if index >= #legs then return end
+
+		local legDuration = (legs[index + 1].Position - legs[index].Position).Magnitude / speeds[index]
+
+		ReplicatedTween.Tween(
+			clone.PrimaryPart,
+			TweenInfo.new(legDuration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 0, false),
+			{ CFrame = legs[index + 1] }
+		)
+
+		task.delay(legDuration, function()
+			if clone.Parent then
+				playLeg(index + 1)
+			end
+		end)
+	end
+
+	playLeg(1)
+
+	task.delay(totalDuration, function()
 		if clone.Parent then
 			clone:Destroy()
 		end
@@ -99,12 +140,29 @@ local function startLane(lane: Folder)
 
 	local stageNumber = lane:GetAttribute("Stage")
 	local reverses = lane:GetAttribute("Reverse") or false
-	local startCFrame = startPart.CFrame
-	local endCFrame = endPart.CFrame
+
+	local midPart = lane:FindFirstChild("MidCFrame")
+	local hasMid = midPart and midPart:IsA("BasePart")
+
+	local waypoints: { CFrame } = hasMid
+		and { startPart.CFrame, midPart.CFrame, endPart.CFrame }
+		or { startPart.CFrame, endPart.CFrame }
+
+	-- FirstPathSpeed is optional and only meaningful with a MidCFrame - lets
+	-- the Start->Mid leg move at a different speed than the rest of the path
+	-- (which stays at Speed). Falls back to Speed if unset/invalid.
+	local legSpeeds: { number }
+	if hasMid then
+		local firstPathSpeed = lane:GetAttribute("FirstPathSpeed")
+		local firstLegSpeed = (firstPathSpeed and firstPathSpeed > 0) and firstPathSpeed or speed
+		legSpeeds = { firstLegSpeed, speed }
+	else
+		legSpeeds = { speed }
+	end
 
 	task.spawn(function()
 		while true do
-			spawnObstacle(lane.Name, template, startCFrame, endCFrame, speed, reverses, stageNumber)
+			spawnObstacle(lane.Name, template, waypoints, legSpeeds, reverses, stageNumber)
 			task.wait(spawnRate)
 		end
 	end)

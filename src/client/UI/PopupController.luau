@@ -18,10 +18,22 @@ local BLUR_TIME = 0.3
 local HOVER_SCALE = 1.08
 local HOVER_TIME = 0.15
 
+-- Workspace.Functional.OpenFrames.<Name> parts trigger Main.<Name> open on
+-- approach - default radius, overridable per-part via an optional "Radius"
+-- attribute (same attribute-driven convention as ObstaclePaths/TreadmillService).
+local DEFAULT_PROXIMITY_RADIUS = 10
+local PROXIMITY_CHECK_INTERVAL = 0.25
+
 local blur: BlurEffect
 local currentOpenFrame: Frame?
 local restingPositions: { [Frame]: UDim2 } = {}
 local activeTweens: { [Frame]: { Tween } } = {}
+
+-- True only while a frame is open *because* the player walked into its
+-- OpenFrames trigger zone - lets leaving the zone auto-close it, without
+-- also closing a frame the player opened manually (icon click) while
+-- standing in the same zone.
+local openedByProximity: { [Frame]: boolean } = {}
 
 local function ensureBlur()
 	if blur then return end
@@ -132,21 +144,79 @@ local function wireHover(icon: GuiButton)
 	end)
 end
 
-local function registerPopup(frame: Frame, icon: GuiButton, closeButton: GuiButton)
+-- icon is optional - a frame with a valid CloseButton but no (or an unset)
+-- ToggleButton still gets its resting position captured and its close button
+-- wired, so PopupController.Open/.Close work when driven externally (e.g. a
+-- keybind-only panel like AdminPanel), it just has no icon to hover/click.
+local function registerPopup(frame: Frame, closeButton: GuiButton, icon: GuiButton?)
 	restingPositions[frame] = frame.Position
 
-	wireHover(icon)
+	if icon then
+		wireHover(icon)
 
-	icon.Activated:Connect(function()
-		if frame.Visible then
-			PopupController.Close(frame)
-		else
-			PopupController.Open(frame)
-		end
-	end)
+		icon.Activated:Connect(function()
+			openedByProximity[frame] = false
+			if frame.Visible then
+				PopupController.Close(frame)
+			else
+				PopupController.Open(frame)
+			end
+		end)
+	end
 
 	closeButton.Activated:Connect(function()
 		PopupController.Close(frame)
+	end)
+end
+
+-- Workspace.Functional.OpenFrames.<Name> parts (marker parts, same
+-- convention as SpawnZombiePositions/ObstaclePaths) open Main.<Name> when
+-- the player walks within range - only parts whose name matches an
+-- already-registered popup (present in restingPositions) are wired.
+local function startProximityTriggers(mainGui: Instance)
+	local openFramesFolder = workspace:FindFirstChild("Functional") and workspace.Functional:FindFirstChild("OpenFrames")
+	if not openFramesFolder then return end
+
+	local triggers: { { Part: BasePart, Frame: Frame } } = {}
+	for _, part in openFramesFolder:GetChildren() do
+		if not part:IsA("BasePart") then continue end
+		local frame = mainGui:FindFirstChild(part.Name)
+		if frame and frame:IsA("Frame") and restingPositions[frame] then
+			table.insert(triggers, { Part = part, Frame = frame })
+		end
+	end
+	if #triggers == 0 then return end
+
+	local playerInsideZone: { [BasePart]: boolean } = {}
+
+	task.spawn(function()
+		while true do
+			local character = LocalPlayer.Character
+			local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+			for _, trigger in triggers do
+				local part, frame = trigger.Part, trigger.Frame
+				local wasInside = playerInsideZone[part] or false
+				local radius = part:GetAttribute("Radius") or DEFAULT_PROXIMITY_RADIUS
+				local isInside = rootPart ~= nil and (rootPart.Position - part.Position).Magnitude <= radius
+
+				if isInside and not wasInside then
+					if not frame.Visible then
+						openedByProximity[frame] = true
+						PopupController.Open(frame)
+					end
+				elseif not isInside and wasInside then
+					if openedByProximity[frame] then
+						PopupController.Close(frame)
+						openedByProximity[frame] = false
+					end
+				end
+
+				playerInsideZone[part] = isInside
+			end
+
+			task.wait(PROXIMITY_CHECK_INTERVAL)
+		end
 	end)
 end
 
@@ -159,20 +229,22 @@ function PopupController.Start()
 	for _, frame in mainGui:GetChildren() do
 		if not frame:IsA("Frame") then continue end
 
-		local toggleButton = frame:FindFirstChild("ToggleButton")
 		local closeButton = frame:FindFirstChild("CloseButton")
-		if not (toggleButton and toggleButton:IsA("ObjectValue") and closeButton and closeButton:IsA("ObjectValue")) then
+		local closeInstance = closeButton and closeButton:IsA("ObjectValue") and closeButton.Value
+		if not (closeInstance and closeInstance:IsA("GuiButton")) then
 			continue
 		end
 
-		local icon = toggleButton.Value
-		local closeInstance = closeButton.Value
-		if not (icon and icon:IsA("GuiButton") and closeInstance and closeInstance:IsA("GuiButton")) then
-			continue
+		local toggleButton = frame:FindFirstChild("ToggleButton")
+		local icon = toggleButton and toggleButton:IsA("ObjectValue") and toggleButton.Value
+		if not (icon and icon:IsA("GuiButton")) then
+			icon = nil
 		end
 
-		registerPopup(frame, icon, closeInstance)
+		registerPopup(frame, closeInstance, icon)
 	end
+
+	startProximityTriggers(mainGui)
 end
 
 return PopupController

@@ -60,6 +60,25 @@ local function getXpBoostMultiplier(stats: { [string]: any }): number
 	return (stats.XpBoostRemainingSeconds or 0) > 0 and 2 or 1
 end
 
+-- Server: reads SpeedPassService's live state (recomputed fresh from owned
+-- passes every call - always accurate). Client: reads the replicated
+-- PlayerData.SpeedPassMultiplier value SpeedPassService periodically syncs
+-- (display/prediction only, and only eventually consistent after a purchase -
+-- see SpeedPassService's own comment for why polling is needed there).
+local function getSpeedPassMultiplier(stats: { [string]: any }): number
+	if RunService:IsServer() then
+		local player = stats.Player
+		if not player then
+			return 1
+		end
+		-- Required inline (not at module top-level) to avoid a circular require:
+		-- SpeedPassService requires XpPerPress at its own top level.
+		local SpeedPassService = require(game:GetService("ServerScriptService").Server.SpeedPass.SpeedPassService)
+		return SpeedPassService.GetMultiplierForPlayer(player)
+	end
+	return stats.SpeedPassMultiplier or 1
+end
+
 -- Server-global, not per-player - reads ServerBoostService's live state
 -- directly on the server, and the replicated workspace attribute it syncs
 -- on the client. No stats.Player/PlayerData lookup needed either way, since
@@ -74,9 +93,23 @@ local function getServerBoostMultiplier(): number
 	return Workspace:GetAttribute("ServerBoostMultiplier") or 1
 end
 
+-- Server-global, not per-player - admin-set, cross-server multiplier. Same
+-- shape as getServerBoostMultiplier: server reads AdminService's live state,
+-- client reads the replicated workspace attribute.
+local function getAdminXpMultiplier(): number
+	if RunService:IsServer() then
+		-- Required inline for consistency with the other live-service lookups
+		-- above (no actual circular-require risk here, AdminService doesn't
+		-- require XpPerPress).
+		local AdminService = require(game:GetService("ServerScriptService").Server.Admin.AdminService)
+		return AdminService.GetXpMultiplier()
+	end
+	return Workspace:GetAttribute("AdminXpMultiplier") or 1
+end
+
 local function calculateAmount(stats: { [string]: any }): number
 	local baseAmount = XpPerPressConfig.GetStepAmount(stats.EquippedPressOption or XpPerPressConfig.DefaultOption)
-	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats) * getXpBoostMultiplier(stats) * getServerBoostMultiplier()
+	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats) * getXpBoostMultiplier(stats) * getSpeedPassMultiplier(stats) * getServerBoostMultiplier() * getAdminXpMultiplier()
 	return math.floor(baseAmount * multiplier)
 end
 
@@ -109,6 +142,7 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
 	local equippedAuraValue = playerData and playerData:FindFirstChild("EquippedAura")
 	local xpBoostRemainingValue = playerData and playerData:FindFirstChild("XpBoostRemainingSeconds")
+	local speedPassMultiplierValue = playerData and playerData:FindFirstChild("SpeedPassMultiplier")
 
 	return calculateAmount({
 		EquippedPressOption = equippedValue and equippedValue.Value,
@@ -117,6 +151,7 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 		Rebirths = rebirthsValue and rebirthsValue.Value,
 		EquippedTrail = equippedTrailValue and equippedTrailValue.Value,
 		EquippedAura = equippedAuraValue and equippedAuraValue.Value,
+		SpeedPassMultiplier = speedPassMultiplierValue and speedPassMultiplierValue.Value,
 	})
 end
 

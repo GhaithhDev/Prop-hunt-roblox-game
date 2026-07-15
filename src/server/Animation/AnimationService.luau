@@ -48,7 +48,7 @@ function AnimationService.Play(character: Model, animationName: string, looped: 
 	animationMeta[character] = animationMeta[character] or {}
 	animationMeta[character][animationName] = { looped = looped, priority = priority }
 	activeAnimations[character] = animationName
-
+	print("fired to play this animation: " .. animationName)
 	Net:RemoteEvent(RemoteConfig.Animations.PlayAnimation.Name):FireAllClients(character, animationName, looped, priority)
 end
 
@@ -72,13 +72,23 @@ function AnimationService.Resume(character: Model, animationName: string, fadeTi
 	Net:RemoteEvent(RemoteConfig.Animations.ResumeAnimation.Name):FireAllClients(character, animationName, fadeTime, weight, speed)
 end
 
+-- Replays every animation ever Play'd for each character (not just the
+-- currently-active one) - a track that was Play'd then Stop'd during warm-up
+-- (e.g. ZombieWalk) still needs to be loaded on a late joiner's client, since
+-- future Resume calls for it assume the track was already loaded and don't
+-- resend looped/priority themselves.
 function AnimationService.Init()
 	Players.PlayerAdded:Connect(function(player)
-		for character, animationName in activeAnimations do
-			local meta = animationMeta[character] and animationMeta[character][animationName]
-			if meta then
+		for character, meta in animationMeta do
+			local activeAnimationName = activeAnimations[character]
+
+			for animationName, animMeta in meta do
 				Net:RemoteEvent(RemoteConfig.Animations.PlayAnimation.Name):FireClient(
-					player, character, animationName, meta.looped, meta.priority)
+					player, character, animationName, animMeta.looped, animMeta.priority)
+
+				if animationName ~= activeAnimationName then
+					Net:RemoteEvent(RemoteConfig.Animations.StopAnimation.Name):FireClient(player, character, animationName)
+				end
 			end
 		end
 	end)

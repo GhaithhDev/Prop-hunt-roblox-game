@@ -105,6 +105,7 @@ function AnimationController.Play(
 ): AnimationTrack?
 	-- character can arrive nil over a remote if the Instance itself hadn't
 	-- replicated to this client yet at the moment the server fired it.
+	print("trying to play " .. animationName .. " animatino")
 	local animator = getAnimator(character)
 	if not animator then
 		return nil
@@ -117,6 +118,7 @@ function AnimationController.Play(
 			track.Priority = priority
 		end
 		track:Play(fadeTime, weight, speed)
+		print("played " .. animationName .. " successfuly")
 	end
 	return track
 end

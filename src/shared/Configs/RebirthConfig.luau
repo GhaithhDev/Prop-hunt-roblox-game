@@ -8,10 +8,32 @@ export type Tier = {
 -- Tiers[N] = requirement/reward for performing the Nth rebirth (going from
 -- Rebirths = N-1 to Rebirths = N requires reaching RequiredLevel). Add more
 -- entries to extend progression - no other code needs to change.
+-- RequiredLevel ramps gently at first (5/10/15/20) then accelerates, topping
+-- out at Level 400 for the 20th (max) rebirth - comfortably past the Level
+-- 150 WalkSpeed cap (SpeedConfig), but far short of what the uncapped
+-- Speed-stat->Level curve (LevelConfig) could otherwise demand.
+-- Placeholder balance curve (tunable).
 RebirthConfig.Tiers = {
-	[1] = { RequiredLevel = 1, Multiplier = 2 },
-	[2] = { RequiredLevel = 100, Multiplier = 3 },
-	[3] = { RequiredLevel = 150, Multiplier = 5 },
+	[1] = { RequiredLevel = 5, Multiplier = 2 },
+	[2] = { RequiredLevel = 10, Multiplier = 3 },
+	[3] = { RequiredLevel = 15, Multiplier = 4 },
+	[4] = { RequiredLevel = 20, Multiplier = 5 },
+	[5] = { RequiredLevel = 30, Multiplier = 6 },
+	[6] = { RequiredLevel = 40, Multiplier = 8 },
+	[7] = { RequiredLevel = 55, Multiplier = 10 },
+	[8] = { RequiredLevel = 70, Multiplier = 12 },
+	[9] = { RequiredLevel = 90, Multiplier = 15 },
+	[10] = { RequiredLevel = 110, Multiplier = 18 },
+	[11] = { RequiredLevel = 135, Multiplier = 22 },
+	[12] = { RequiredLevel = 160, Multiplier = 26 },
+	[13] = { RequiredLevel = 190, Multiplier = 32 },
+	[14] = { RequiredLevel = 220, Multiplier = 38 },
+	[15] = { RequiredLevel = 255, Multiplier = 45 },
+	[16] = { RequiredLevel = 290, Multiplier = 55 },
+	[17] = { RequiredLevel = 325, Multiplier = 65 },
+	[18] = { RequiredLevel = 355, Multiplier = 80 },
+	[19] = { RequiredLevel = 380, Multiplier = 95 },
+	[20] = { RequiredLevel = 400, Multiplier = 115 },
 } :: { [number]: Tier }
 
 local maxDefinedTier = 0

@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local TrailsConfig = require(ReplicatedStorage.Shared.Configs.TrailsConfig)
 local AurasConfig = require(ReplicatedStorage.Shared.Configs.AurasConfig)
 
@@ -10,7 +11,7 @@ local TrailsAurasMultiplierController = {}
 
 function TrailsAurasMultiplierController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local label = playerGui:WaitForChild("Main"):WaitForChild("Stats"):WaitForChild("Multiplayer"):WaitForChild("Trails+AurasMultiplayer")
+	local label = playerGui:WaitForChild("Main"):WaitForChild("Stats"):WaitForChild("UpperContainer"):WaitForChild("Multiplayer"):WaitForChild("Trails+AurasMultiplayer")
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
 	local trailValue = playerData:WaitForChild("EquippedTrail")
@@ -18,7 +19,7 @@ function TrailsAurasMultiplierController.Start()
 
 	local function update()
 		local multiplier = TrailsConfig.GetMultiplierForEquipped(trailValue.Value) * AurasConfig.GetMultiplierForEquipped(auraValue.Value)
-		label.Text = `{multiplier}x`
+		label.Text = `Multiplayer  x{NumberFormat.FormatDecimal(multiplier)}  (Trails & Auras)`
 	end
 
 	trailValue:GetPropertyChangedSignal("Value"):Connect(update)

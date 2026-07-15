@@ -40,9 +40,16 @@ function PressOptionsController.Start()
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
 	local equippedValue = playerData:WaitForChild("EquippedPressOption")
+	local winsValue = playerData:WaitForChild("Wins")
 
 	equippedValue:GetPropertyChangedSignal("Value"):Connect(function()
 		UpdateColors( equippedValue.Value)
+	end)
+
+	-- Wins changing (spent or earned) can flip which options are affordable
+	-- even when it doesn't also change the equipped option itself.
+	winsValue:GetPropertyChangedSignal("Value"):Connect(function()
+		UpdateColors(equippedValue.Value)
 	end)
 
 	UpdateColors(equippedValue.Value)

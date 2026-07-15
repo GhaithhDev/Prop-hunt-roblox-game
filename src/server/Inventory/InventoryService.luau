@@ -3,11 +3,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local TrailsConfig = require(ReplicatedStorage.Shared.Configs.TrailsConfig)
 local AurasConfig = require(ReplicatedStorage.Shared.Configs.AurasConfig)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
+local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService)
 
 local TRAIL_ASSETS = ReplicatedStorage.Shared.Assets.Trails
 local AURA_ASSETS = ReplicatedStorage.Shared.Assets.Auras
@@ -78,11 +80,12 @@ local function onBuyWithWins(player: Player, category: string, itemId: string)
 
 	local wins = DataManager.Get(player, "Wins") or 0
 	if wins < item.WinsCost then
-		Net:RemoteEvent("Notify"):FireClient(player, "error", `You need {item.WinsCost} Wins to buy {item.Name}!`)
+		Net:RemoteEvent("Notify"):FireClient(player, "error", `You need {NumberFormat.Format(item.WinsCost)} Wins to buy {item.Name}!`)
 		return
 	end
 
 	DataManager.Add(player, "Wins", -item.WinsCost)
+	PressXpService.RecheckEquippedOption(player)
 	MonetizationService.GrantPass(player, gamePassCategory, itemId)
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `Purchased {item.Name}!`)
 end
@@ -140,7 +143,20 @@ local function applyEquippedVisuals(player: Player)
 		if template then
 			local clone = template:Clone()
 			clone.Name = AURA_PART_NAME
+
+			-- Size/position the emitter part to the character's full bounding
+			-- box so the Box-shaped, LockedToPart particle emission (see
+			-- ReplicatedStorage.Shared.Assets.Auras) fills the whole body
+			-- instead of a single point at the HumanoidRootPart.
+			local boundingCFrame, boundingSize = character:GetBoundingBox()
+			clone.CFrame = boundingCFrame
+			clone.Size = boundingSize
 			clone.Parent = humanoidRootPart
+
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = humanoidRootPart
+			weld.Part1 = clone
+			weld.Parent = clone
 		end
 	end
 end

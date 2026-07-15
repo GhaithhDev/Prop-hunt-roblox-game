@@ -5,6 +5,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
 local TeleportConfig = require(ReplicatedStorage.Shared.Configs.TeleportConfig)
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -41,7 +42,7 @@ local function wireStage(frame: Frame, item: TeleportConfig.StageEntry)
 	if winsButton then
 		local winsLabel = winsButton:FindFirstChildOfClass("TextLabel")
 		if winsLabel then
-			winsLabel.Text = tostring(item.WinsCost)
+			winsLabel.Text = NumberFormat.Format(item.WinsCost)
 		end
 
 		winsButton.Activated:Connect(function()

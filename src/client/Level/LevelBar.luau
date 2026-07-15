@@ -52,11 +52,12 @@ end
 
 function LevelBar.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local levelBarFrame = playerGui:WaitForChild("Main"):WaitForChild("Stats"):WaitForChild("LevelBar")
+	local statsFrame = playerGui:WaitForChild("Main"):WaitForChild("Stats")
+	local levelBarFrame = statsFrame:WaitForChild("LevelBar")
 	levelLabel = levelBarFrame:WaitForChild("Level")
 	xpToNextLevelLabel = levelBarFrame:WaitForChild("XPToNextLevel")
 	fillFrame = levelBarFrame:WaitForChild("Fill")
-	totalXpLabel = levelBarFrame:WaitForChild("TotalXpFrame"):WaitForChild("TextLabel")
+	totalXpLabel = statsFrame:WaitForChild("UpperContainer"):WaitForChild("TextLabel")
 	fillYSize = fillFrame.Size.Y
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")

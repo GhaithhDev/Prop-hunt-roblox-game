@@ -49,6 +49,19 @@ function RebirthController.Start()
 
 	icon.Activated:Connect(RefreshStatus)
 
+	local playerData = LocalPlayer:WaitForChild("PlayerData")
+	local rebirthsValue = playerData:WaitForChild("Rebirths")
+	local levelValue = playerData:WaitForChild("Level")
+
+	local function RefreshIfVisible()
+		if frame.Visible then
+			RefreshStatus()
+		end
+	end
+
+	rebirthsValue:GetPropertyChangedSignal("Value"):Connect(RefreshIfVisible)
+	levelValue:GetPropertyChangedSignal("Value"):Connect(RefreshIfVisible)
+
 	buyRebirthButton.Activated:Connect(function()
 		Net:Invoke("PerformRebirth")
 		RefreshStatus()

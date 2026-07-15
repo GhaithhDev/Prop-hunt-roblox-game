@@ -3,10 +3,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
 local TeleportConfig = require(ReplicatedStorage.Shared.Configs.TeleportConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
+local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService)
 
 local TELEPORT_OFFSET = Vector3.new(0, 3, 0)
 local WINS_KEY = "Wins"
@@ -57,11 +59,12 @@ local function onRequestWinsTeleport(player: Player, stageNumber: number)
 
 	local wins = DataManager.Get(player, WINS_KEY) or 0
 	if wins < stage.WinsCost then
-		Net:RemoteEvent("Notify"):FireClient(player, "error", `You need {stage.WinsCost} Wins to teleport to Stage {stageNumber}!`)
+		Net:RemoteEvent("Notify"):FireClient(player, "error", `You need {NumberFormat.Format(stage.WinsCost)} Wins to teleport to Stage {stageNumber}!`)
 		return
 	end
 
 	DataManager.Add(player, WINS_KEY, -stage.WinsCost)
+	PressXpService.RecheckEquippedOption(player)
 	teleportPlayerToStage(player, stageNumber)
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `Teleported to Stage {stageNumber}!`)
 end

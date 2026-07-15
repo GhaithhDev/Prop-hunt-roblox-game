@@ -30,4 +30,18 @@ return {
 		ValueName = "ServerBoostRemainingSeconds",
 		MultiplierValueName = "ServerBoostMultiplier",
 	},
+	{
+		Id = "AdminXpBoost",
+		DisplayName = "Admin Speed Boost",
+		Scope = "Server",
+		ValueName = "AdminXpRemainingSeconds",
+		MultiplierValueName = "AdminXpMultiplier",
+	},
+	{
+		Id = "AdminWinsBoost",
+		DisplayName = "Admin Wins Boost",
+		Scope = "Server",
+		ValueName = "AdminWinsRemainingSeconds",
+		MultiplierValueName = "AdminWinsMultiplier",
+	},
 } :: { BoostEntry }

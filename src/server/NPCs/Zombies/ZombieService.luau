@@ -118,7 +118,6 @@ end
 local function think(state)
 	local root = state.root
 	if not root or not root.Parent then return end
-
 	-- Rebuilt every think so newly-joined players are excluded from LOS
 	-- blocking, same as the crowd-exclude reasoning in PathfindingAgent.
 	state._losParams = PathfindingAgent.BuildLosParams(state.model, { zombiesFolder })

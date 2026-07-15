@@ -8,6 +8,8 @@ local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
 local WinsConfig = require(ReplicatedStorage.Shared.Configs.WinsConfig)
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService)
+local WinsMultiplierService = require(ServerScriptService.Server.WinsMultiplier.WinsMultiplierService)
+local AdminService = require(ServerScriptService.Server.Admin.AdminService)
 
 local TELEPORT_OFFSET = Vector3.new(0, 3, 0)
 local DEBOUNCE_TIME = 1
@@ -42,6 +44,14 @@ local function OnWinHitboxTouched(part, hit)
 		warn("WinsService: no WinsConfig entry for stage " .. tostring(stage))
 		return
 	end
+
+	if WinsMultiplierService.HasDoubleWins(player) then
+		winsAmount *= 2
+	end
+
+	-- Admin multiplier can be a non-whole number (arbitrary TextBox input),
+	-- unlike the flat x2 above - floor to keep Wins a clean integer.
+	winsAmount = math.floor(winsAmount * AdminService.GetWinsMultiplier())
 
 	DataManager.Add(player, "Wins", winsAmount)
 	PressXpService.RecheckEquippedOption(player)

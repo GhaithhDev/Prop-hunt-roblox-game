@@ -9,6 +9,7 @@ local Template = {
 	ProcessedPurchaseIds = {},
 	EquippedTrail = "",
 	EquippedAura = "",
+	EquippedKeycapSound = "Alpaca",
 	XpBoostExpiresAt = 0,
 }
 

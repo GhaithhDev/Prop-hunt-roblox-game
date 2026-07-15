@@ -150,8 +150,9 @@ function PathfindingAgent.MoveToward(state, toPos: Vector3, opts: { computeBudge
 	local repathDistance = opts.repathDistance or 6
 
 	local losParams = state._losParams or PathfindingAgent.BuildLosParams(state.model)
-
-	if PathfindingAgent.HasLineOfSight(state.root.CFrame, toPos, losParams, state.model:GetExtentsSize()) then
+	state.humanoid:MoveTo(toPos)
+	return
+	--[[if PathfindingAgent.HasLineOfSight(state.root.CFrame, toPos, losParams, state.model:GetExtentsSize()) then
 		debugPrint( "[" .. state.model.Name .. "]" .. "LOS clear, moving straight to: ", toPos)
 		PathfindingAgent.StopPath(state)
 		state.humanoid:MoveTo(toPos)
@@ -174,7 +175,7 @@ function PathfindingAgent.MoveToward(state, toPos: Vector3, opts: { computeBudge
 		else
 			debugPrint( "[" .. state.model.Name .. "]" .. "continuing existing path to: ", state.lastPathTarget, "targetMoved: ", targetMoved)
 		end
-	end
+	end]]
 end
 
 ------------------------------------------------------------------------

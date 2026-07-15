@@ -5,7 +5,6 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
 
 --//Configs
 local SIZE_MULTI_ATTRIBUTE = "KeycapSizeMulti"
@@ -15,9 +14,6 @@ local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
 
 --//Packages
 local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
-
---//Assets
-local ClickSound = SoundService.SFX.Keyboard.Click3
 
 --//Cache
 local lastSoundPlayTime = nil
@@ -71,7 +67,13 @@ local function OnKeycapPressed(keycap, player)
     tween:Play()
 
     if not lastSoundPlayTime or tick() - lastSoundPlayTime >= KeycapsConfigs.ClickSoundCooldown then
-        SoundUtils.PlayLocalSound(ClickSound)
+        -- Required inline (not at module top-level) to avoid a circular
+        -- require: KeycapSoundController requires KeycapSoundConfig, not
+        -- this module, but PressKeycaps is a dual-realm module and this
+        -- path only exists client-side - same inline-require idiom
+        -- XpPerPress.luau uses for its own live-service lookups.
+        local KeycapSoundController = require(Players.LocalPlayer.PlayerScripts.Client.KeycapSound.KeycapSoundController)
+        SoundUtils.PlayLocalSound(KeycapSoundController.GetActiveSound())
         lastSoundPlayTime = tick()
     end
 end

@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local GroupRewardsConfig = require(ReplicatedStorage.Shared.Configs.GroupRewardsConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local LevelService = require(ServerScriptService.Server.Level.LevelService)
@@ -35,7 +36,7 @@ local function claimReward(player: Player)
 	LevelService.GrantXp(player, GroupRewardsConfig.XpReward)
 	DataManager.SetOwned(player, OWNED_CATEGORY, REWARD_ID, true)
 
-	Net:RemoteEvent("Notify"):FireClient(player, "success", `+{GroupRewardsConfig.XpReward} XP! Thanks for joining the group!`)
+	Net:RemoteEvent("Notify"):FireClient(player, "success", `+{NumberFormat.Format(GroupRewardsConfig.XpReward)} XP! Thanks for joining the group!`)
 end
 
 function GroupRewardsService.Start()

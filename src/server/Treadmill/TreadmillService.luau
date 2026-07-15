@@ -13,8 +13,23 @@ local LevelService = require(ServerScriptService.Server.Level.LevelService)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
 
-local TreadmillTemplate = ReplicatedStorage.Shared.Assets.Treadmills.PlayerTreadMill
-local SafeZonePart = workspace.Functional.Areas.Safe
+-- Each Model here is a personal-treadmill tier (Normal, Gold, Diamond, ...),
+-- pre-baked with the same Multiplier/GamePassName/RequiresGamePass attributes
+-- as their Workspace.Functional.Treadmills world-placed counterparts.
+local PLAYER_TREADMILL_ASSETS = ReplicatedStorage.Shared.Assets.PlayerTreadmills
+
+-- Admin-spawned temporary event treadmills (e.g. RadioactiveTreadmill,
+-- UFOTreadmill) - just a Multiplier attribute baked in, no GamePass gating.
+local EVENT_TREADMILL_ASSETS = ReplicatedStorage.Shared.Assets.EventTreadmills
+
+-- Areas.Safe is a Folder of Parts (multiple safe zones can exist at once) -
+-- collected once at load time since the zones are static level geometry.
+local SafeZoneParts: { BasePart } = {}
+for _, part in workspace.Functional.Areas.Safe:GetChildren() do
+	if part:IsA("BasePart") then
+		table.insert(SafeZoneParts, part)
+	end
+end
 
 local ATTR_REQUIRES_GAMEPASS = "RequiresGamePass"
 local ATTR_GAMEPASS_NAME = "GamePassName"
@@ -23,6 +38,9 @@ local GATE_NOTIFY_DEBOUNCE = 3 -- seconds between repeat notify+prompt for the s
 local TreadmillService = {}
 
 local playerTreadmillsFolder: Folder
+local eventTreadmillFolder: Folder
+local eventTreadmillSpawnPart: BasePart
+local currentEventTreadmill: Model?
 local ownedTreadmills: { [Player]: Model } = {}
 local runAnimTracks: { [Player]: AnimationTrack } = {}
 local trackedCharacter: { [Player]: Model } = {}
@@ -30,11 +48,17 @@ local standingMultiplier: { [Player]: number } = {}
 local gateDebounce: { [Player]: boolean } = {}
 
 local function isInsideSafeZone(position: Vector3): boolean
-	local halfSize = SafeZonePart.Size / 2
-	local localPosition = SafeZonePart.CFrame:PointToObjectSpace(position)
-	return math.abs(localPosition.X) <= halfSize.X
-		and math.abs(localPosition.Y) <= halfSize.Y
-		and math.abs(localPosition.Z) <= halfSize.Z
+	for _, safeZonePart in SafeZoneParts do
+		local halfSize = safeZonePart.Size / 2
+		local localPosition = safeZonePart.CFrame:PointToObjectSpace(position)
+		if math.abs(localPosition.X) <= halfSize.X
+			and math.abs(localPosition.Y) <= halfSize.Y
+			and math.abs(localPosition.Z) <= halfSize.Z
+		then
+			return true
+		end
+	end
+	return false
 end
 
 local function aabbOverlap(centerA: Vector3, halfA: Vector3, centerB: Vector3, halfB: Vector3, margin: number): boolean
@@ -136,6 +160,33 @@ local function teleportOntoTreadmill(character: Model, clone: Model)
 	character:PivotTo(CFrame.new(newPosition) * rotationOnly)
 end
 
+-- Highest-Multiplier tier the player is eligible for: always eligible if
+-- RequiresGamePass is falsy (e.g. "Normal"), otherwise only if they own the
+-- matching Treadmills GamePass. Normal (Multiplier=1) naturally wins as the
+-- fallback when nothing higher is owned - no special-casing needed.
+local function pickTreadmillTemplateForPlayer(player: Player): Model?
+	local bestModel: Model? = nil
+	local bestMultiplier = -1
+
+	for _, model in PLAYER_TREADMILL_ASSETS:GetChildren() do
+		if not model:IsA("Model") then continue end
+
+		local requiresGamePass = model:GetAttribute(ATTR_REQUIRES_GAMEPASS)
+		local gamePassName = model:GetAttribute(ATTR_GAMEPASS_NAME)
+		local eligible = not requiresGamePass or (gamePassName and MonetizationService.OwnsPass(player, "Treadmills", gamePassName))
+
+		if eligible then
+			local multiplier = model:GetAttribute("Multiplier") or 1
+			if multiplier > bestMultiplier then
+				bestMultiplier = multiplier
+				bestModel = model
+			end
+		end
+	end
+
+	return bestModel
+end
+
 local function destroyPlayerTreadmill(player: Player)
 	local treadmill = ownedTreadmills[player]
 	if not treadmill then return end
@@ -152,17 +203,23 @@ local function spawnPlayerTreadmill(player: Player)
 
 	local spawnCFrame = character:GetPivot()
 	if not isInsideSafeZone(spawnCFrame.Position) then
-		warn(`TreadmillService: {player.Name} tried to spawn a treadmill outside the Safe zone`)
+		Net:RemoteEvent("Notify"):FireClient(player, "error", "You can only spawn a treadmill in the Safe zone!")
 		return
 	end
 
-	local clone = TreadmillTemplate:Clone()
+	local template = pickTreadmillTemplateForPlayer(player)
+	if not template then
+		warn(`TreadmillService: no eligible PlayerTreadmills template found for {player.Name}`)
+		return
+	end
+
+	local clone = template:Clone()
 	clone:PivotTo(spawnCFrame)
 	restOnGround(clone, getGroundY(character))
 
 	if overlapsExistingTreadmill(clone) then
 		clone:Destroy()
-		warn(`TreadmillService: {player.Name} tried to spawn a treadmill overlapping an existing one`)
+		Net:RemoteEvent("Notify"):FireClient(player, "error", "That spot overlaps another treadmill!")
 		return
 	end
 
@@ -313,6 +370,35 @@ function TreadmillService.GetMultiplierForPlayer(player: Player): number
 	return standingMultiplier[player] or 1
 end
 
+-- Only one spawn point exists, so a new spawn replaces whatever event
+-- treadmill is currently active rather than stacking/overlapping with it.
+function TreadmillService.SpawnEventTreadmill(name: string, duration: number)
+	local template = EVENT_TREADMILL_ASSETS:FindFirstChild(name)
+	if not template or not template:IsA("Model") then
+		warn(`TreadmillService: "{name}" has no matching Model in Assets.EventTreadmills - skipping`)
+		return
+	end
+
+	if currentEventTreadmill then
+		currentEventTreadmill:Destroy()
+		currentEventTreadmill = nil
+	end
+
+	local clone = template:Clone()
+	clone:PivotTo(eventTreadmillSpawnPart.CFrame)
+	CollectionService:AddTag(clone, Tags.EVENT_TREADMILL)
+	clone.Parent = eventTreadmillFolder
+
+	currentEventTreadmill = clone
+
+	task.delay(duration, function()
+		if currentEventTreadmill == clone then
+			currentEventTreadmill = nil
+			clone:Destroy()
+		end
+	end)
+end
+
 function TreadmillService.Start()
 	for _, treadmill in workspace.Functional.Treadmills:GetChildren() do
 		if treadmill:IsA("Model") then
@@ -325,6 +411,14 @@ function TreadmillService.Start()
 		playerTreadmillsFolder = Instance.new("Folder")
 		playerTreadmillsFolder.Name = "PlayerTreadmills"
 		playerTreadmillsFolder.Parent = workspace.Functional
+	end
+
+	eventTreadmillSpawnPart = workspace.Functional:WaitForChild("EventTreadmillSpawnCFrame")
+	eventTreadmillFolder = workspace.Functional:FindFirstChild("EventTreadmills")
+	if not eventTreadmillFolder then
+		eventTreadmillFolder = Instance.new("Folder")
+		eventTreadmillFolder.Name = "EventTreadmills"
+		eventTreadmillFolder.Parent = workspace.Functional
 	end
 
 	Net:Connect("ToggleSpawn", onToggleSpawn)

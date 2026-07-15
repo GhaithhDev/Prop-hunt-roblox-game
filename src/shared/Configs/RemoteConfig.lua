@@ -70,4 +70,20 @@ return {
 		GetShopStatus = { Name = "GetShopStatus", Type = "Function" },
 		RequestServerBoost = { Name = "RequestServerBoost", Type = "Event" },
 	},
+
+	KeycapSound = {
+		-- Function (not Event) so the client can await completion before
+		-- refreshing the equipped highlight - same reasoning as Inventory's
+		-- EquipItem.
+		EquipKeycapSound = { Name = "EquipKeycapSound", Type = "Function" },
+	},
+
+	Admin = {
+		AdminAction = { Name = "AdminAction", Type = "Event" },
+		AdminAnnouncement = { Name = "AdminAnnouncement", Type = "Event" },
+	},
+
+	PlusPercentSpeed = {
+		RequestPlusPercentSpeed = { Name = "RequestPlusPercentSpeed", Type = "Event" },
+	},
 }

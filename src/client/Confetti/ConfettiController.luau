@@ -1,10 +1,7 @@
 local Debris       = game:GetService("Debris")
 local Players      = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-
-local Net = require(ReplicatedStorage.Shared.Packages.Net)
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -56,12 +53,6 @@ function ConfettiController.Play()
         task.delay(3, function()
             gui:Destroy()
         end)
-    end)
-end
-
-function ConfettiController.Start()
-    Net:Connect("WinAwarded", function()
-        ConfettiController.Play()
     end)
 end
 

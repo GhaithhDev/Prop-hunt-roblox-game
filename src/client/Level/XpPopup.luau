@@ -4,6 +4,7 @@ local TweenService = game:GetService("TweenService")
 
 local XpPerPress = require(ReplicatedStorage.Shared.Packages.XpPerPress)
 local XpPopupConfig = require(ReplicatedStorage.Shared.Configs.XpPopupConfig)
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -33,7 +34,7 @@ local function SpawnPopup()
 	local clone = popupTemplate:Clone()
 	local plusAmountLabel = clone:FindFirstChild("PlusAmount")
 	if plusAmountLabel then
-		plusAmountLabel.Text = "+" .. tostring(XpPerPress.GetAmountForLocalPlayer())
+		plusAmountLabel.Text = "+" .. NumberFormat.Format(XpPerPress.GetAmountForLocalPlayer())
 	end
 
 	local basePosition = popupTemplate.Position
