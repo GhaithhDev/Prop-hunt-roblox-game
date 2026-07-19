@@ -73,6 +73,7 @@ local function overlapsExistingTreadmill(candidate: Model): boolean
 	local candidateHalf = candidateSize / 2
 
 	for _, treadmill in CollectionService:GetTagged(Tags.TREADMILL) do
+		if not treadmill:IsDescendantOf(workspace) then continue end
 		local otherCFrame, otherSize = treadmill:GetBoundingBox()
 		if aabbOverlap(candidateCFrame.Position, candidateHalf, otherCFrame.Position, otherSize / 2, TreadmillConfig.SpawnOverlapMargin) then
 			return true
@@ -241,6 +242,10 @@ local function onToggleSpawn(player: Player)
 end
 
 local function findStandingPlayers(treadmill: Model): { [Player]: boolean }
+	if not treadmill:IsDescendantOf(workspace) then
+		return {}
+	end
+
 	local boundingCFrame, boundingSize = treadmill:GetBoundingBox()
 	local hitboxSize = boundingSize + Vector3.new(0, TreadmillConfig.StandHitboxVerticalPadding, 0)
 

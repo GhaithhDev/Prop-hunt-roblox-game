@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyboard Escape Template — Setup &amp; Customization Guide</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 22mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1c2128;
+    font-size: 10.8pt;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1, h2, h3, h4 { font-family: "Segoe UI", Helvetica, Arial, sans-serif; color: #0d1117; line-height: 1.25; }
+  h1 { font-size: 22pt; margin: 0 0 6pt; }
+  h2 {
+    font-size: 15pt; margin: 0 0 10pt; padding-bottom: 6pt;
+    border-bottom: 2px solid #2f6feb; color: #0b3d91;
+    page-break-before: always;
+  }
+  .cover h2 { page-break-before: avoid; }
+  h3 { font-size: 12pt; margin: 18pt 0 6pt; color: #0b3d91; }
+  h4 { font-size: 10.8pt; margin: 12pt 0 4pt; color: #24292f; }
+  p { margin: 0 0 8pt; }
+  ol, ul { margin: 0 0 10pt; padding-left: 20pt; }
+  li { margin-bottom: 4pt; }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    background: #f0f3f7; border: 1px solid #d8dee6; border-radius: 3px;
+    padding: 1px 4px; font-size: 9.3pt; color: #a4145b;
+  }
+  pre {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    background: #f6f8fa; border: 1px solid #d8dee6; border-left: 3px solid #2f6feb;
+    border-radius: 4px; padding: 9pt 11pt; font-size: 8.8pt; line-height: 1.5;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    margin: 8pt 0 12pt; page-break-inside: avoid;
+  }
+  pre code { background: none; border: none; padding: 0; color: #24292f; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0 14pt; font-size: 9.3pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #d8dee6; padding: 5pt 7pt; text-align: left; vertical-align: top; }
+  th { background: #eef3fb; color: #0b3d91; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  .box {
+    border-radius: 5px; padding: 9pt 12pt; margin: 10pt 0; font-size: 9.6pt;
+    page-break-inside: avoid;
+  }
+  .warn { background: #fff8e6; border: 1px solid #f0c74a; }
+  .warn::before { content: "⚠ IMPORTANT — "; font-weight: 700; color: #8a6400; }
+  .tip { background: #eaf6ec; border: 1px solid #7cc98a; }
+  .tip::before { content: "✓ TIP — "; font-weight: 700; color: #1e7a34; }
+  .step-goal { background: #eef3fb; border: 1px solid #bcd4f7; }
+  .step-goal::before { content: "GOAL — "; font-weight: 700; color: #0b3d91; }
+  .path { font-family: Consolas, monospace; font-size: 9.3pt; color: #444; }
+  .toc { list-style: none; padding-left: 0; }
+  .toc li { margin-bottom: 6pt; font-size: 10.5pt; }
+  .toc .num { display: inline-block; width: 22pt; color: #2f6feb; font-weight: 700; }
+  .toc .sub { padding-left: 22pt; font-size: 9.6pt; color: #444; margin-bottom: 3pt; }
+  .cover {
+    height: 245mm; display: flex; flex-direction: column; justify-content: center;
+    page-break-after: always;
+  }
+  .cover .tag {
+    display: inline-block; background: #0b3d91; color: white; font-size: 10pt;
+    letter-spacing: 2px; padding: 4pt 10pt; border-radius: 3px; margin-bottom: 14pt;
+    width: fit-content; text-transform: uppercase;
+  }
+  .cover h1 { font-size: 30pt; max-width: 420pt; }
+  .cover .sub-title { font-size: 13pt; color: #444; margin-top: 4pt; margin-bottom: 30pt; }
+  .cover .footer-note { font-size: 9.5pt; color: #666; margin-top: 60pt; border-top: 1px solid #d8dee6; padding-top: 10pt; max-width: 380pt; }
+  .badge {
+    display: inline-block; font-size: 8pt; font-weight: 700; text-transform: uppercase;
+    padding: 1pt 6pt; border-radius: 10pt; letter-spacing: .5px;
+  }
+  .badge-code { background: #ffe4e1; color: #9c2a2a; }
+  .badge-studio { background: #e1efff; color: #0b3d91; }
+  .badge-web { background: #e9e1ff; color: #4b2a9c; }
+  .kv { width: 100%; }
+  .kv td:first-child { width: 34%; font-weight: 600; color: #0b3d91; background: #fafbfc; }
+  .small { font-size: 9pt; color: #555; }
+  .checklist li { list-style: none; margin-bottom: 6pt; }
+  .checklist { padding-left: 4pt; }
+  .checklist li::before { content: "☐  "; font-size: 11pt; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <span class="tag">Setup &amp; Customization Guide</span>
+  <h1>Keyboard Escape Template</h1>
+  <div class="sub-title">A complete, no-programming-required walkthrough for configuring, rebranding, and balancing your copy of the template — done entirely inside Roblox Studio.</div>
+  <p>This guide assumes no coding experience and no extra software. Every step tells you exactly which Explorer location to open, exactly what to change, and exactly what Studio screen to use. Anything that means editing a script uses a <span class="badge badge-code">SCRIPT</span> tag; anything done entirely inside Studio's Explorer/Properties uses a <span class="badge badge-studio">STUDIO</span> tag; anything done on the Roblox website uses a <span class="badge badge-web">WEBSITE</span> tag.</p>
+  <div class="footer-note">
+    Covers: opening your place file under your own group · enabling required Roblox services · setting your Group ID · replacing every monetization ID with your own · balancing every knob in the game · admin access · adding Trails, Auras, and Obstacles. An optional appendix at the end covers Rojo, for anyone who prefers editing scripts in an external code editor.
+  </div>
+</section>
+
+<!-- ============ TABLE OF CONTENTS ============ -->
+<section>
+<h2 id="toc">Table of Contents</h2>
+<ul class="toc">
+  <li><span class="num">1</span> Getting the Project Open in Studio</li>
+  <li><span class="num">2</span> Turning On the Services Your Game Needs</li>
+  <li><span class="num">3</span> Setting Your Roblox Group</li>
+  <li><span class="num">4</span> Replacing Every Monetization ID With Your Own</li>
+  <li><span class="num">5</span> Balancing the Game — Every Knob, Explained</li>
+  <li><span class="num">6</span> Giving Yourself Admin Access</li>
+  <li><span class="num">7</span> Adding a New Trail</li>
+  <li><span class="num">8</span> Adding a New Aura</li>
+  <li><span class="num">9</span> Adding a New Obstacle</li>
+  <li><span class="num">10</span> Pre-Publish Checklist</li>
+  <li><span class="num">A</span> Appendix — Optional: Editing With Rojo</li>
+</ul>
+</section>
+
+<!-- ============ 1. GETTING STARTED ============ -->
+<section>
+<h2 id="s1">1. Getting the Project Open in Studio</h2>
+
+<div class="box step-goal">Open your copy of the game, save it under your own Roblox group, and learn the one skill you'll reuse for every step in this guide: opening a script in the Explorer and editing it.</div>
+
+<h3>1.1 Open the place file <span class="badge badge-studio">STUDIO</span></h3>
+<p>You were provided a Roblox place file (<code>.rbxlx</code>). Double-click it — it opens directly in Roblox Studio, fully built and ready to edit. There is nothing to install and nothing to build.</p>
+
+<h3>1.2 Save it under your own group <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>In Studio's <b>File</b> menu, choose <b>Save to Roblox As…</b></li>
+  <li>In the dialog that appears, set the <b>creator</b> to your own Roblox <b>Group</b> (not your personal account) — this publishes the game as belonging to your group, which matters once you set up monetization and the group-join reward.</li>
+  <li>Give it a name and click <b>Save</b>. This is now your own, fully independent copy of the game.</li>
+</ol>
+<div class="box tip">If you don't yet have a group, create one first at roblox.com — it takes a minute and is free.</div>
+
+<h3>1.3 How every step in this guide works <span class="badge badge-studio">STUDIO</span></h3>
+<p>This game's settings all live in small scripts called <b>ModuleScripts</b>, organized in folders inside Studio's <b>Explorer</b> window (open it via <b>View → Explorer</b> if you don't see it). Every step below gives you a Studio path like this:</p>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/GroupRewardsConfig</td></tr></table>
+<p>Read it left to right as folders to open in the Explorer tree: open <code>ReplicatedStorage</code>, then <code>Shared</code>, then <code>Configs</code>, then double-click <code>GroupRewardsConfig</code> to open it in Studio's built-in Script Editor. Make your edit right there, then save the whole place with <b>Ctrl+S</b> (or <b>File → Save to Roblox</b>) when you're done.</p>
+<div class="box tip">That's the entire skill this guide relies on. Every chapter after this one is just "go to this path, change this value."</div>
+
+</section>
+
+<!-- ============ 2. SERVICES ============ -->
+<section>
+<h2 id="s2">2. Turning On the Services Your Game Needs</h2>
+
+<div class="box step-goal">Enable the Roblox backend services this template relies on, so saving, leaderboards, and admin tools work both in Studio and after publishing.</div>
+
+<p>This game saves player progress, runs global leaderboards, and syncs Admin Panel actions across servers. All three require one switch to be turned on.</p>
+
+<h3>2.1 Enable Studio Access to API Services <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>In Studio, go to the <b>Home</b> tab → <b>Game Settings</b>.</li>
+  <li>Open the <b>Security</b> tab.</li>
+  <li>Turn on <b>Enable Studio Access to API Services</b>.</li>
+  <li>Click <b>Save</b>.</li>
+</ol>
+<p>Without this, testing the game inside Studio will fail to save data or show leaderboards (you'll see red errors in the Output window mentioning <code>DataStoreService</code>).</p>
+
+<h3>2.2 What each service is used for (informational)</h3>
+<table class="kv">
+  <tr><td>Player data saving (Wins, Level, Rebirths, cosmetics, everything)</td><td><b>DataStoreService</b> — used by the data-saving system. If this is off, nobody's progress saves.</td></tr>
+  <tr><td>Global Level &amp; Wins leaderboards (the signboards in the world)</td><td><b>DataStoreService</b> — used by the Global Leaderboard system.</td></tr>
+  <tr><td>Admin Panel actions (XP/Wins boosts, announcements) reaching every live server at once</td><td><b>MessagingService</b> — this is on by default once API access is enabled; no separate switch.</td></tr>
+</table>
+
+<div class="box warn">Once you <b>publish</b> the game (not just test in Studio), these services work automatically — the Studio toggle above only affects testing inside the editor. You do not need to touch "Allow HTTP Requests" — this template makes no external web requests.</div>
+
+</section>
+
+<!-- ============ 3. GROUP ============ -->
+<section>
+<h2 id="s3">3. Setting Your Roblox Group</h2>
+
+<div class="box step-goal">Point the "join our group for a reward" feature at your own Roblox group instead of the template author's.</div>
+
+<p>Players who join your group and click Claim in-game receive a one-time XP reward. This is controlled by a single number.</p>
+
+<table class="kv">
+  <tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/GroupRewardsConfig</td></tr>
+</table>
+
+<pre><code>GroupRewardsConfig.GroupId = 423275116  -- replace with your Group ID
+GroupRewardsConfig.XpReward = 15000     -- how much XP the reward grants</code></pre>
+
+<ol>
+  <li><b>(Website)</b> Create (or open) your group on the Roblox website.</li>
+  <li>Your Group ID is the number in the group's URL, e.g. <code>roblox.com/groups/<b>423275116</b>/My-Group</code>.</li>
+  <li>Replace the number after <code>GroupRewardsConfig.GroupId =</code> with your group's number.</li>
+  <li>Optionally change <code>XpReward</code> to however much XP you want to grant (currently 15,000).</li>
+</ol>
+
+</section>
+
+<!-- ============ 4. MONETIZATION ============ -->
+<section>
+<h2 id="s4">4. Replacing Every Monetization ID With Your Own</h2>
+
+<div class="box step-goal">Make every Robux purchase button in the game sell something YOU own, so the money goes to you.</div>
+
+<div class="box warn">Every ID currently in this script belongs to the template author's own game. If you publish without replacing them, purchases will either fail outright or attempt to sell items you do not own. This is the single most important step before launch.</div>
+
+<table class="kv">
+  <tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/MonetizationConfig</td></tr>
+</table>
+
+<h3>4.1 Important — everything here is a Developer Product, even the "Game Passes"</h3>
+<p>This template purchases <i>everything</i> — including permanent unlocks like Trails, Auras, and Speed Pass tiers — as Roblox <b>Developer Products</b>, not as real Roblox Game Passes. This is intentional: unlike Game Passes, Developer Products can be gifted to another player, which is what makes a future "gift this to a friend" feature possible. The game's own code (behind the scenes) treats a Developer Product listed under the <code>GamePasses</code> section as a <i>permanent</i> unlock the moment it's purchased once — from a player's point of view it behaves exactly like a normal Game Pass. You never need to create an actual Game Pass on the Creator Dashboard for anything in this game.</p>
+<div class="box warn">Wherever this guide (or the config script) says "GamePasses", create a <b>Developer Product</b> for it — not a Game Pass. This applies to every single entry in the file, in both the <code>GamePasses</code> section and the <code>DevProducts</code> section.</div>
+
+<h3>4.2 Step-by-step, for every single entry</h3>
+<ol>
+  <li><b>(Website)</b> Go to the <b>Creator Dashboard</b> for your own game.</li>
+  <li>Under <b>Monetization → Developer Products</b>, create one new Developer Product for every item listed in the tables below (name it however you like, set your own price), and copy its ID.</li>
+  <li><b>(Script)</b> In <code>MonetizationConfig</code>, replace each number with the matching ID you just created. Keep the field <i>names</i> exactly as they are — only change the numbers.</li>
+</ol>
+
+<h3>4.3 Every permanent unlock (listed under <code>GamePasses</code> in the script)</h3>
+<table>
+  <tr><th>Category</th><th>Entries (field names)</th><th>What it's for</th></tr>
+  <tr><td><code>Treadmills</code></td><td><code>Gold</code>, <code>Diamond</code>, <code>Zombie</code>, <code>Admin</code></td><td>Cosmetic/functional personal treadmill tiers a player can own.</td></tr>
+  <tr><td><code>Trails</code></td><td><code>Green</code>, <code>Blue</code>, <code>Purple</code>, <code>Red</code>, <code>Yellow</code></td><td>Cosmetic trail unlocks (see Chapter 7).</td></tr>
+  <tr><td><code>Auras</code></td><td><code>Purple</code>, <code>Red</code>, <code>Yellow</code>, <code>Green</code>, <code>Blue</code></td><td>Cosmetic aura unlocks (see Chapter 8).</td></tr>
+  <tr><td><code>SpeedPass</code></td><td><code>Tier2</code>, <code>Tier4</code>, <code>Tier8</code>, <code>Tier16</code></td><td>Permanent XP-per-press multiplier tiers.</td></tr>
+  <tr><td><code>WinsMultiplier</code></td><td><code>Double</code></td><td>Permanent 2× Wins unlock.</td></tr>
+  <tr><td><code>KeycapSounds</code></td><td><code>Unlock</code></td><td>Unlocks all 8 premium keycap sounds at once.</td></tr>
+</table>
+
+<h3>4.4 Every repeatable purchase (listed under <code>DevProducts</code> in the script)</h3>
+<table>
+  <tr><th>Category</th><th>Entries</th><th>What it's for</th></tr>
+  <tr><td><code>RebirthSkip</code></td><td>single ID</td><td>Skip the level requirement for your next rebirth.</td></tr>
+  <tr><td><code>SkipToStage</code></td><td><code>["2"]</code> through <code>["10"]</code></td><td>Instantly teleport to that stage via Robux.</td></tr>
+  <tr><td><code>ReviveToPreviousStage</code></td><td>single ID</td><td>Revive-in-place after dying.</td></tr>
+  <tr><td><code>XpBoost</code></td><td>3 unnamed entries (list positions 1-3)</td><td>Temporary 2× XP boosts, increasing duration per tier.</td></tr>
+  <tr><td><code>ServerBoost</code></td><td>5 unnamed entries (2×, 4×, 6×, 8×, 10× — see code comments)</td><td>Server-wide XP multiplier, benefits every player on the server.</td></tr>
+  <tr><td><code>PlusPercentSpeed</code></td><td><code>FirstOption</code> (2%), <code>SecondOption</code> (5%), <code>ThirdOption</code> (12%)</td><td>One-time flat Speed bonus based on the buyer's current Speed.</td></tr>
+</table>
+
+<div class="box tip">The <code>XpBoost</code> and <code>ServerBoost</code> entries are plain lists (no names) — replace the numbers in the same order, left to right, and don't change how many entries are in the list.</div>
+
+</section>
+
+<!-- ============ 5. BALANCING ============ -->
+<section>
+<h2 id="s5">5. Balancing the Game — Every Knob, Explained</h2>
+<div class="box step-goal">A complete reference of every number in the game that affects pacing, difficulty, or the in-game economy — where it lives, what it currently is, and what changing it does.</div>
+
+<h3>5.1 Wins earned per stage</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/WinsConfig</td></tr></table>
+<pre><code>WinsConfig.WinsByStage = {
+    [1] = 1,   [2] = 3,   [3] = 10,  [4] = 100, [5] = 500,
+    [6] = 600, [7] = 700, [8] = 800, [9] = 900, [10] = 1000, ...
+}</code></pre>
+<p>How many Wins (the in-game currency) a player earns for reaching each stage. Raising a value speeds up how fast players can afford teleports and cosmetics; lowering it slows the whole economy down.</p>
+
+<h3>5.2 Rebirth tiers</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/RebirthConfig</td></tr></table>
+<pre><code>RebirthConfig.Tiers = {
+    [1]  = { RequiredLevel = 5,   Multiplier = 2 },
+    [2]  = { RequiredLevel = 10,  Multiplier = 3 },
+    [3]  = { RequiredLevel = 15,  Multiplier = 4 },
+    ...
+    [18] = { RequiredLevel = 355, Multiplier = 80 },
+    [19] = { RequiredLevel = 380, Multiplier = 95 },
+    [20] = { RequiredLevel = 400, Multiplier = 115 },  -- max tier
+}</code></pre>
+<p><code>RequiredLevel</code> is how high a player's Level must be to perform that rebirth (higher = harder to reach). <code>Multiplier</code> is the permanent XP-gain multiplier they keep afterward (higher = bigger permanent power jump). Tier 20 is the maximum — players who exceed it stay at tier 20's multiplier.</p>
+
+<h3>5.3 Level / XP curve</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/LevelConfig</td></tr></table>
+<pre><code>LevelConfig.BaseXp = 250       -- XP needed for level 1 -> 2
+LevelConfig.GrowthRate = 1.2   -- how much more each next level costs</code></pre>
+<p>Raising <code>BaseXp</code> makes the very first level-up take longer (and scales every level after it proportionally). Raising <code>GrowthRate</code> makes later levels cost disproportionately more than earlier ones — it steepens the whole curve rather than shifting it evenly. Levels up to 300 are pre-calculated in a lookup table in this same script for performance; if you change these two numbers you're changing the formula used beyond level 300 — for hand-tuning specific early levels, edit the table entries directly instead.</p>
+
+<h3>5.4 Stage teleport (skip) prices</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TeleportConfig</td></tr></table>
+<table>
+<tr><th>Stage</th><th>Wins Cost</th></tr>
+<tr><td>2</td><td>2</td></tr><tr><td>3</td><td>6</td></tr><tr><td>4</td><td>20</td></tr>
+<tr><td>5</td><td>40</td></tr><tr><td>6</td><td>100</td></tr><tr><td>7</td><td>200</td></tr>
+<tr><td>8</td><td>300</td></tr><tr><td>9</td><td>600</td></tr><tr><td>10</td><td>1000</td></tr>
+</table>
+<p>The Wins price to skip straight to that stage (players can also pay Robux via the matching <code>SkipToStage</code> Developer Product — Chapter 4). Raising a stage's cost pushes players toward either grinding more or paying Robux; lowering it makes the grind path more attractive.</p>
+
+<h3>5.5 Cosmetic prices &amp; power (Trails / Auras)</h3>
+<table>
+<tr><th>Trail</th><th>Wins Cost</th><th>XP Multiplier</th></tr>
+<tr><td>Green</td><td>300</td><td>1.5×</td></tr>
+<tr><td>Blue</td><td>1,200</td><td>2×</td></tr>
+<tr><td>Purple</td><td>5,000</td><td>3×</td></tr>
+<tr><td>Red</td><td>15,000</td><td>4×</td></tr>
+<tr><td>Yellow</td><td>40,000</td><td>5×</td></tr>
+</table>
+<table>
+<tr><th>Aura</th><th>Wins Cost</th><th>XP Multiplier</th></tr>
+<tr><td>Purple</td><td>400</td><td>1.2×</td></tr>
+<tr><td>Red</td><td>1,500</td><td>1.5×</td></tr>
+<tr><td>Yellow</td><td>6,000</td><td>2×</td></tr>
+<tr><td>Green</td><td>18,000</td><td>3×</td></tr>
+<tr><td>Blue</td><td>45,000</td><td>4×</td></tr>
+</table>
+<p>Trail and Aura multipliers <b>stack multiplicatively</b> with everything else (Rebirth, Treadmill, boosts) when calculating XP-per-keypress. Raising <code>WinsCost</code> in either script makes that cosmetic more expensive; raising <code>Multiplier</code> makes it more powerful while equipped. Scripts: <span class="path">ReplicatedStorage/Shared/Configs/TrailsConfig</span> and <span class="path">ReplicatedStorage/Shared/Configs/AurasConfig</span>.</p>
+
+<h3>5.6 Everything that stacks into XP-per-press</h3>
+<table class="kv"><tr><td>Script (informational)</td><td class="path">ReplicatedStorage/Shared/Packages/XpPerPress</td></tr></table>
+<p>This multiplies together, in order: Rebirth multiplier, Aura multiplier, Trail multiplier, personal Treadmill multiplier, temporary XP Boost (fixed 2× while active), Speed Pass tier, server-wide Server Boost, and any Admin-set multiplier. There's no single number to change here — this script just combines all the multipliers listed above.</p>
+
+<h3>5.7 Flat Speed-bonus purchase tiers</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/PlusPercentSpeedConfig</td></tr></table>
+<pre><code>FirstOption  = 0.02  -- 2%
+SecondOption = 0.05  -- 5%
+ThirdOption  = 0.12  -- 12%</code></pre>
+<p>Each purchase grants a one-time flat bonus equal to this percentage of the player's <i>current</i> Speed stat at the moment of purchase. Raising these numbers makes each purchase grant a bigger permanent jump.</p>
+
+<h3>5.8 Keycap sounds (cosmetic only)</h3>
+<p><span class="path">ReplicatedStorage/Shared/Configs/KeycapSoundConfig</span> — purely cosmetic, no balance impact. Each sound has a <code>Free</code> flag; non-free ones unlock together via the single <code>KeycapSounds.Unlock</code> entry from Chapter 4.</p>
+
+</section>
+
+<!-- ============ 6. ADMIN ============ -->
+<section>
+<h2 id="s6">6. Giving Yourself Admin Access</h2>
+
+<div class="box step-goal">Unlock the in-game Admin Panel (press P) for yourself, so you can broadcast announcements and grant temporary server-wide boosts while testing or running events.</div>
+
+<table class="kv">
+  <tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/AdminConfig</td></tr>
+</table>
+
+<pre><code>WHITELIST_ACTIVE = false,   -- true = only whitelisted players see the Admin Panel
+
+Whitelist = {
+    10454577227, -- example entry
+},</code></pre>
+
+<ol>
+  <li><b>(Website)</b> Find your numeric Roblox User ID: open your own Roblox profile page — the number in the URL (<code>roblox.com/users/<b>10454577227</b>/profile</code>) is your User ID.</li>
+  <li><b>(Script)</b> Add a new line inside the <code>Whitelist = { ... }</code> list with your User ID, e.g.:
+    <pre><code>Whitelist = {
+    10454577227,
+    YOUR_USER_ID_HERE,
+},</code></pre>
+  </li>
+  <li>Set <code>WHITELIST_ACTIVE = true</code> once you're ready to restrict the panel to only whitelisted players. Leave it <code>false</code> during your own testing if you want anyone to be able to open it.</li>
+</ol>
+
+<div class="box warn">Always set <code>WHITELIST_ACTIVE = true</code> before your public launch — otherwise every player can open the Admin Panel and grant themselves boosts.</div>
+
+<p>In-game: press <b>P</b> to open the Admin Panel once whitelisted.</p>
+
+</section>
+
+<!-- ============ 7. TRAILS ============ -->
+<section>
+<h2 id="s7">7. Adding a New Trail</h2>
+
+<div class="box step-goal">Add a brand-new equippable trail cosmetic that players can buy with Wins (in-game currency) and, optionally, Robux.</div>
+
+<p>Trails are identified everywhere by a single short <b>id</b> (e.g. <code>Green</code>, <code>Blue</code>) which must be spelled <i>identically</i> in three places. Pick a new id first, e.g. <code>Orange</code>, and use it exactly everywhere below.</p>
+
+<h3>Step 1 — Duplicate the Studio asset <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>In the Explorer, go to <span class="path">ReplicatedStorage/Shared/Assets/Trails</span>.</li>
+  <li>Right-click an existing trail folder (e.g. <code>Green</code>) → <b>Duplicate</b>.</li>
+  <li>Rename the duplicate to your new id, e.g. <code>Orange</code>.</li>
+  <li>Inside it you'll find two <code>Attachment</code> instances named <code>Attachment0</code> and <code>Attachment1</code>, and a <code>Trail</code> instance named <code>TrailEffect</code>. <b>Keep these three names exactly as they are</b> — only change cosmetic properties like the Trail's <code>Color</code> or <code>Texture</code>.</li>
+</ol>
+
+<h3>Step 2 — Add the config entry <span class="badge badge-code">SCRIPT</span></h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TrailsConfig</td></tr></table>
+<pre><code>TrailsConfig.Items = {
+    Green  = { Name = "Green Trail",  WinsCost = 300,   Multiplier = 1.5, Color = Color3.fromRGB(60, 220, 90) },
+    -- ... existing entries ...
+
+    Orange = { Name = "Orange Trail", WinsCost = 25000, Multiplier = 4.5, Color = Color3.fromRGB(255, 140, 0) },
+}</code></pre>
+<p>The key (<code>Orange</code>) must exactly match the Studio folder name from Step 1. <code>WinsCost</code> is the in-game currency price; <code>Multiplier</code> is how much it boosts XP-per-press while equipped; <code>Color</code> is only used for the UI swatch.</p>
+
+<h3>Step 3 — (Optional) allow buying it with Robux <span class="badge badge-code">SCRIPT</span></h3>
+<p>Create a Developer Product for it (see Chapter 4 — not a Game Pass), then add it under <code>GamePasses.Trails</code> in <span class="path">ReplicatedStorage/Shared/Configs/MonetizationConfig</span> using the same id:</p>
+<pre><code>Trails = {
+    Green = 3609493687,
+    -- ...
+    Orange = YOUR_NEW_DEVPRODUCT_ID,
+},</code></pre>
+<div class="box tip">Skipping Step 3 is fine — the trail will still be fully purchasable with Wins. The Robux buy button just won't work until you add this.</div>
+
+</section>
+
+<!-- ============ 8. AURAS ============ -->
+<section>
+<h2 id="s8">8. Adding a New Aura</h2>
+
+<div class="box step-goal">Add a brand-new equippable full-body particle aura, following the same id-matching pattern as Trails.</div>
+
+<h3>Step 1 — Duplicate the Studio asset <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>Go to <span class="path">ReplicatedStorage/Shared/Assets/Auras</span>.</li>
+  <li>Duplicate an existing aura (e.g. <code>Blue</code>) and rename it to your new id, e.g. <code>Orange</code>.</li>
+</ol>
+<div class="box warn">Each Aura template must be a <b>Part</b> containing a <b>ParticleEmitter</b> — not a bare ParticleEmitter on its own. When equipped, the game automatically resizes and repositions this Part to cover the wearer's whole body, and the ParticleEmitter fills that volume. Duplicating an existing Aura keeps this working correctly automatically — just make sure you duplicate the whole Part (not just the ParticleEmitter inside it).</div>
+<p>On the ParticleEmitter inside your duplicated Part, freely change <b>Color</b>, <b>Texture</b>, and <b>Rate</b> to design your look — but leave <b>Shape</b> (Box), <b>ShapeStyle</b> (Volume), and <b>LockedToPart</b> (On) exactly as they are, or the full-body coverage will break.</p>
+
+<h3>Step 2 — Add the config entry <span class="badge badge-code">SCRIPT</span></h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/AurasConfig</td></tr></table>
+<pre><code>AurasConfig.Items = {
+    Purple = { Name = "Purple Aura", WinsCost = 400, Multiplier = 1.2, Color = Color3.fromRGB(170, 80, 255) },
+    -- ... existing entries ...
+
+    Orange = { Name = "Orange Aura", WinsCost = 50000, Multiplier = 4.5, Color = Color3.fromRGB(255, 140, 0) },
+}</code></pre>
+
+<h3>Step 3 — (Optional) allow buying it with Robux <span class="badge badge-code">SCRIPT</span></h3>
+<p>Same as Trails: create a Developer Product (Chapter 4), then add it under <code>GamePasses.Auras</code> in <span class="path">ReplicatedStorage/Shared/Configs/MonetizationConfig</span> with the matching id.</p>
+
+</section>
+
+<!-- ============ 9. OBSTACLES ============ -->
+<section>
+<h2 id="s9">9. Adding a New Obstacle</h2>
+
+<div class="box step-goal">Add a new moving hazard to a stage. This is the one content type that needs zero script edits — it's entirely done inside Studio.</div>
+
+<h3>Step 1 — Build the hazard model <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>Under <span class="path">ReplicatedStorage/Shared/Assets/Obstacles</span>, add a new Model containing your hazard's parts, e.g. name it <code>SpikeWall</code>.</li>
+  <li>Make sure it has a <code>PrimaryPart</code> set (or at least one regular Part inside it).</li>
+</ol>
+
+<h3>Step 2 — Create its movement lane <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>Under <span class="path">Workspace/Functional/ObstaclePaths</span>, add a new <b>Folder</b> — this represents one obstacle "lane."</li>
+  <li>Inside that Folder, add two Parts named exactly <code>StartCFrame</code> and <code>EndCFrame</code> — these mark where the obstacle starts and ends its movement. (Optionally add a third, <code>MidCFrame</code>, for a 3-point path.)</li>
+  <li>On the Folder itself, add these <b>Attributes</b> (Properties panel → Attributes → +):</li>
+</ol>
+<table>
+  <tr><th>Attribute</th><th>Type</th><th>Meaning</th></tr>
+  <tr><td><code>ModelName</code></td><td>String</td><td>Must exactly match the Model name from Step 1, e.g. <code>"SpikeWall"</code>.</td></tr>
+  <tr><td><code>SpawnRate</code></td><td>Number</td><td>Seconds between each spawn of this obstacle.</td></tr>
+  <tr><td><code>Speed</code></td><td>Number</td><td>Studs per second it travels along the lane.</td></tr>
+  <tr><td><code>Stage</code></td><td>Number (optional)</td><td>Which stage this belongs to, for death/revive banners.</td></tr>
+  <tr><td><code>Reverse</code></td><td>Boolean (optional)</td><td>Reverses the direction of travel.</td></tr>
+  <tr><td><code>FirstPathSpeed</code></td><td>Number (optional)</td><td>Only used if you added a <code>MidCFrame</code> — speed for the first leg of the path.</td></tr>
+</table>
+
+<div class="box tip">That's the whole process — no script needs to be touched. The game automatically discovers every Folder under <code>ObstaclePaths</code> and starts spawning that obstacle.</div>
+
+</section>
+
+<!-- ============ 10. CHECKLIST ============ -->
+<section>
+<h2 id="s10">10. Pre-Publish Checklist</h2>
+<p>Work through this list before you make the game public.</p>
+<ul class="checklist">
+  <li>Place saved under your own Roblox group (Chapter 1), and opens with no red errors in the Output window.</li>
+  <li><b>Game Settings → Security → Enable Studio Access to API Services</b> is turned on.</li>
+  <li><code>GroupRewardsConfig.GroupId</code> points at your own group (Chapter 3).</li>
+  <li>Every ID in <code>MonetizationConfig</code> has been replaced with a Developer Product you created in your own game (Chapter 4) — none are left as the template author's original numbers, and none were created as Game Passes.</li>
+  <li>Balance values (Chapter 5) reviewed and adjusted to your liking — the shipped defaults are a reasonable starting point, not a requirement.</li>
+  <li>Your own User ID is in <code>AdminConfig.Whitelist</code>, and <code>WHITELIST_ACTIVE</code> is set to <code>true</code> (Chapter 6).</li>
+  <li>Any new Trails/Auras/Obstacles you've added show up correctly and are equip/purchase-tested with a second test account (cosmetics equipped by one account shouldn't appear on another's screen incorrectly).</li>
+  <li>Play-tested a full loop end-to-end: earn Wins → buy a cosmetic → rebirth → teleport to a later stage → open the Admin Panel (if whitelisted) → confirm the global leaderboards populate after a minute or two.</li>
+</ul>
+
+<div class="box tip">Keep this guide — every chapter above maps to exactly one Explorer location, so you can return to it any time you want to add more content or retune the economy.</div>
+
+</section>
+
+<!-- ============ APPENDIX: ROJO ============ -->
+<section>
+<h2 id="sA">Appendix — Optional: Editing With Rojo</h2>
+
+<div class="box step-goal">Everything in this guide works entirely inside Studio — you never need this appendix. It's here only for developers who prefer editing scripts in an external code editor (like VS Code) with live sync back into Studio, e.g. for using version control or a team workflow.</div>
+
+<p>This project's source is organized in a plain folder structure that a tool called <b>Rojo</b> can sync into Studio automatically. If you'd like to use it:</p>
+<ol>
+  <li>Install the Rojo command-line tool (see rojo.space) — this project includes an <code>aftman.toml</code> file, so if you use Aftman, running <code>aftman install</code> in the project folder installs the exact version needed automatically.</li>
+  <li>Install the <b>Rojo</b> plugin for Roblox Studio (search "Rojo" in Studio's Toolbox).</li>
+  <li>From a terminal in the project folder, run <code>rojo serve</code>.</li>
+  <li>In Studio, open the <b>Plugins</b> tab, click <b>Rojo</b>, then click <b>Connect</b>.</li>
+  <li>From then on, saving a script file in your code editor updates Studio automatically within a second or two.</li>
+</ol>
+<div class="box tip">This is purely a convenience for people who already work in an external editor — it changes nothing about how the game itself behaves, and every script name/path referenced throughout this guide is identical whether you edit it via Rojo or directly in Studio.</div>
+
+</section>
+
+</body>
+</html>

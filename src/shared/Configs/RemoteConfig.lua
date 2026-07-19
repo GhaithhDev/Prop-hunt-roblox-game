@@ -86,4 +86,13 @@ return {
 	PlusPercentSpeed = {
 		RequestPlusPercentSpeed = { Name = "RequestPlusPercentSpeed", Type = "Event" },
 	},
+
+	Zombies = {
+		BossCountdown = { Name = "BossCountdown", Type = "Event" }, -- (bossName: string, secondsLeft: number)
+		BossReleased = { Name = "BossReleased", Type = "Event" }, -- fired once, no payload needed
+	},
+
+	LowGravity = {
+		SetGravity = { Name = "SetGravity", Type = "Event" }, -- (gravity: number)
+	},
 }

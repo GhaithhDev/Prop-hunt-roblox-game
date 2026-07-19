@@ -7,6 +7,7 @@ local DataManager = require(ServerScriptService.Server.Data.Manager)
 local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
 local WinsConfig = require(ReplicatedStorage.Shared.Configs.WinsConfig)
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService)
 local WinsMultiplierService = require(ServerScriptService.Server.WinsMultiplier.WinsMultiplierService)
 local AdminService = require(ServerScriptService.Server.Admin.AdminService)
@@ -24,7 +25,7 @@ local function InitWinPart(part)
 		warn("Stage attribute is not set for ", part)
 		return
 	end
-	part.BillboardGui.AmountofWins.Text = "+" .. stage .. " Wins"
+	part.BillboardGui.AmountofWins.Text = "+" .. NumberFormat.Format(stage) .. " Wins"
 end
 
 local function OnWinHitboxTouched(part, hit)

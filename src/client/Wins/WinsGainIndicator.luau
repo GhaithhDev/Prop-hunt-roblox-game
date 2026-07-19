@@ -1,8 +1,10 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
 
 local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
+local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -62,6 +64,8 @@ local function GetTrophyCount(amount)
 end
 
 local function ShakeIcon()
+	SoundUtils.PlayLocalSound(SoundService.SFX.ShakeTrophy)
+
 	local sequence = SHAKE_ANGLES
 	local function playStep(index)
 		if index > #sequence then return end
@@ -125,6 +129,7 @@ local function SpawnTrophy(delay)
 end
 
 local function OnWinsGained(amount)
+	SoundUtils.PlayLocalSound(SoundService.SFX.Win)
 	SpawnBigText(amount)
 
 	local trophyCount = GetTrophyCount(amount)

@@ -92,10 +92,10 @@ function GenerateKeycaps.Start()
         end
     end
 
-    for _, surface in surfaces do
+    --[[for _, surface in surfaces do
         GenerateKeycaps.GenerateKeycapsFromSurface(surface, onKeycapGenerated)
         task.wait(.002)
-    end
+    end]]
 
     workspace:SetAttribute("KeycapsGenerationProgress", 100)
     workspace:SetAttribute("KeycapsGenerated", true)

@@ -19,11 +19,21 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
+local SoundService = game:GetService("SoundService")
 
 local ReplicatedTween = require(ReplicatedStorage.Shared.Modules.ReplicatedTween)
 local DeathService = require(ServerScriptService.Server.Death.DeathService)
 
 local ObstacleAssets = ReplicatedStorage.Shared.Assets.Obstacles
+
+-- Keyed by obstacle model name (not lane/folder) since e.g. Wall is reused by
+-- more than one lane and should get the sound every time either spawns.
+local PROXIMITY_SOUND_BY_MODEL = {
+	ZombieWave = "Wave",
+	Wall = "WallMoving",
+	Ball = "WallMoving",
+	RisingGround = "WallMoving",
+}
 
 local ObstacleService = {}
 
@@ -58,6 +68,15 @@ local function spawnObstacle(laneName: string, template: Model, waypoints: { CFr
 
 	clone:PivotTo(waypoints[1])
 	clone.Parent = obstaclesFolder
+
+	local proximitySoundName = PROXIMITY_SOUND_BY_MODEL[template.Name]
+	local proximitySoundTemplate = proximitySoundName and SoundService.SFX.Proximity:FindFirstChild(proximitySoundName)
+	if proximitySoundTemplate then
+		local sound = proximitySoundTemplate:Clone()
+		sound.Looped = true
+		sound.Parent = clone.PrimaryPart
+		sound:Play()
+	end
 
 	for _, part in clone:GetDescendants() do
 		if part:IsA("BasePart") then

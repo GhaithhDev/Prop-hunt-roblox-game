@@ -1,6 +1,11 @@
 local NumberFormat = {}
 
 local SUFFIXES = {
+	{ 1e27, "Oc" },
+	{ 1e24, "Sp" },
+	{ 1e21, "Sx" },
+	{ 1e18, "Qi" },
+	{ 1e15, "Qa" },
 	{ 1e12, "T" },
 	{ 1e9, "B" },
 	{ 1e6, "M" },

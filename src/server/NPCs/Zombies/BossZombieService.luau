@@ -1,39 +1,53 @@
 --[[
-	ZombieService
+	BossZombieService
 
-	Spawns one zombie per Workspace.Functional.SpawnZombiePositions part and
-	runs a simple 3-state behavior on top of PathfindingAgent:
+	Fully independent sibling of ZombieService (same PathfindingAgent
+	foundation, own decision logic) for boss-tier zombies: any
+	Workspace.Functional.SpawnZombiePositions part with a BossCountdownSeconds
+	attribute set is spawned and driven entirely by this service instead of
+	ZombieService, which skips those parts.
 
-	  Chasing          -> a player is inside the spawn point's AttackRange
-	                      part; chase the closest one, kill on contact.
+	4-state behavior on top of PathfindingAgent:
+
+	  Countdown        -> a player entered the AttackRange for the first time
+	                      since Idle; frozen at spawn, announcing a
+	                      once-per-second countdown to everyone currently in
+	                      range. Cancels back to Idle immediately if they
+	                      leave range before it finishes.
+	  Chasing          -> countdown finished (or already released this
+	                      encounter); chase the closest in-range player, kill
+	                      on contact.
 	  ReturningToSpawn -> no player in range; walk back to the spawn position.
-	  Idle             -> arrived back at the spawn position; wait.
-
-	Movement/spawn/despawn/loop plumbing lives in PathfindingAgent (shared
-	with any future pathfinding NPC service); everything below is
-	zombie-specific decision logic layered on top of it.
+	  Idle             -> arrived back at the spawn position; wait for the
+	                      next Countdown trigger.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
 
+local SoundService = game:GetService("SoundService")
+
 local PathfindingAgent = require(script.Parent.Parent.PathfindingAgent)
 local DeathService = require(ServerScriptService.Server.Death.DeathService)
 local AnimationService = require(ServerScriptService.Server.Animation.AnimationService)
+local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 
 local NPCAssets = ReplicatedStorage.Shared.Assets.NPCs
 
--- Cadences
-local THINK_INTERVAL_MIN = 0.08 -- target selection / state decision (randomized - staggers the horde)
+-- Cadences (same values as ZombieService - independent copies, not shared,
+-- consistent with how ZombieService/TreadmillService each keep their own
+-- small pure-math helpers rather than a shared utility module).
+local THINK_INTERVAL_MIN = 0.08
 local THINK_INTERVAL_MAX = 0.15
-local LOCOMOTION_STEP = 0.1 -- steer / repath-staleness check
+local LOCOMOTION_STEP = 0.1
+local STOMP_INTERVAL = 0.5 -- Boss Stomp proximity ping cadence while Chasing
 
--- Movement/combat (placeholders - tune freely)
-local REPATH_DISTANCE = 6 -- only recompute a path once the target has drifted this far (studs)
-local ARRIVE_EPSILON = 1 -- treated as "arrived back at spawn"
+local REPATH_DISTANCE = 6
+local ARRIVE_EPSILON = 1
 
-local ZombieService = {}
+local BossZombieService = {}
 
 local zombiesFolder: Folder
 
@@ -45,15 +59,10 @@ local function isInsideBox(position: Vector3, box: BasePart): boolean
 		and math.abs(localPosition.Z) <= halfSize.Z
 end
 
--- Ignores Y - a zombie's root sits much higher off the ground than a
--- player's, so raw Vector3 distance stays large even when they're standing
--- right next to each other.
 local function horizontalDistance(a: Vector3, b: Vector3): number
 	return Vector2.new(a.X - b.X, a.Z - b.Z).Magnitude
 end
 
--- Kills whichever player touches any of the zombie's parts (event-driven,
--- connected once per spawn - see spawnZombieAt).
 local function killTouchingPlayer(hit: BasePart, stageNumber: any)
 	local character = hit.Parent
 	local player = character and Players:GetPlayerFromCharacter(character)
@@ -66,9 +75,8 @@ local function isMovingMode(mode: string): boolean
 	return mode == "Chasing" or mode == "ReturningToSpawn"
 end
 
--- Only touches animations when "moving-ness" actually flips - Chasing and
--- ReturningToSpawn both keep ZombieWalk running uninterrupted since they're
--- both "moving" states.
+-- Countdown behaves like Idle animation-wise (frozen, no movement) - only
+-- Chasing/ReturningToSpawn count as "moving".
 local function setMode(state, newMode: string)
 	if state.mode == newMode then return end
 
@@ -85,7 +93,6 @@ local function setMode(state, newMode: string)
 	end
 end
 
--- zombie's AttackRange part.
 local function getPlayersInRange(state): { { player: Player, root: BasePart } }
 	local result = {}
 
@@ -106,7 +113,6 @@ local function getPlayersInRange(state): { { player: Player, root: BasePart } }
 	return result
 end
 
--- Closest alive player whose root is inside this zombie's AttackRange part.
 local function getClosestPlayerInRange(state): BasePart?
 	local bestRoot: BasePart? = nil
 	local bestDist = math.huge
@@ -123,27 +129,119 @@ local function getClosestPlayerInRange(state): BasePart?
 end
 
 ------------------------------------------------------------------------
--- THINK: pick target + decide state
+-- THINK: pick target + decide state, including the Countdown warmup
 ------------------------------------------------------------------------
 
+-- 4 explicit states (state.mode): "Idle", "Countdown", "Chasing",
+-- "ReturningToSpawn". Each is an exclusive, self-contained block ending in
+-- `return` with its own entry/exit conditions - only one ever runs per
+-- tick, no shared/fallthrough logic to reason about.
 local function think(state)
 	local root = state.root
 	if not root or not root.Parent then return end
 
-	-- Rebuilt every think so newly-joined players are excluded from LOS
-	-- blocking, same as the crowd-exclude reasoning in PathfindingAgent.
 	state._losParams = PathfindingAgent.BuildLosParams(state.model, { zombiesFolder })
-
 	local target = getClosestPlayerInRange(state)
-	if target then
-		setMode(state, "Chasing")
+
+	if state.mode == "Idle" then
+		-- Exit: a player enters range -> arm the Countdown warmup.
+		if target then
+			state.bossCountdownRemaining = state.bossCountdownSeconds
+			-- Backdated so the very next Countdown tick's ">= 1" check fires
+			-- the first announcement right away instead of waiting a full
+			-- second for it.
+			state.bossCountdownLastTick = os.clock() - 1
+			setMode(state, "Countdown")
+		end
+		return
+	end
+
+	if state.mode == "Countdown" then
+		-- Exit: the player(s) that triggered this left range -> cancel back
+		-- to Idle. Checked every tick (not just once a second) so leaving
+		-- mid-countdown cancels within one think tick, not up to a second
+		-- later.
+		if not target then
+			state.bossCountdownRemaining = nil
+			state.bossCountdownLastTick = nil
+			setMode(state, "Idle")
+			return
+		end
+
+		-- Gate both the announcement and the eventual release to the same
+		-- once-per-real-second cadence, so "1" gets the same full second of
+		-- hold time as every other number before the next event fires -
+		-- otherwise the release (and the BossIsChasing popup it triggers)
+		-- would fire on the very next think tick after "1" is announced,
+		-- overlapping the still-animating BossIncomingFrame popup client-side.
+		local now = os.clock()
+		if now - state.bossCountdownLastTick >= 1 then
+			state.bossCountdownLastTick = now
+
+			-- Exit: countdown finished -> release into Chasing.
+			if state.bossCountdownRemaining <= 0 then
+				state.bossCountdownRemaining = nil
+				state.bossCountdownLastTick = nil
+				state.target = target
+				for _, entry in getPlayersInRange(state) do
+					Net:RemoteEvent("BossReleased"):FireClient(entry.player)
+				end
+				setMode(state, "Chasing")
+				return
+			end
+
+			-- Still counting down: announce to everyone currently in range.
+			for _, entry in getPlayersInRange(state) do
+				Net:RemoteEvent("BossCountdown"):FireClient(entry.player, state.bossName, state.bossCountdownRemaining)
+			end
+			state.bossCountdownRemaining -= 1
+		end
+		return
+	end
+
+	if state.mode == "Chasing" then
+		-- Exit: target lost -> Idle if already back home, else ReturningToSpawn.
+		if not target then
+			state.target = nil
+			if horizontalDistance(root.Position, state.spawnPosition) <= ARRIVE_EPSILON then
+				setMode(state, "Idle")
+			else
+				setMode(state, "ReturningToSpawn")
+			end
+			return
+		end
+
+		-- Still has a target: keep chasing the current closest one.
 		state.target = target
-	elseif horizontalDistance(root.Position, state.spawnPosition) <= ARRIVE_EPSILON then
-		setMode(state, "Idle")
-		state.target = nil
-	else
-		setMode(state, "ReturningToSpawn")
-		state.target = nil
+
+		-- Proximity heartbeat while actively chasing, twice per real second.
+		local now = os.clock()
+		if now - (state.lastStompTick or 0) >= STOMP_INTERVAL then
+			state.lastStompTick = now
+			local stompSound = SoundService.SFX["Boss Stomp"]
+			SoundUtils.PlayProximitySound(root.Position, stompSound.SoundId, {
+				RollOffMinDistance = stompSound.RollOffMinDistance,
+				RollOffMaxDistance = stompSound.RollOffMaxDistance,
+				Volume = stompSound.Volume,
+			})
+		end
+		return
+	end
+
+	if state.mode == "ReturningToSpawn" then
+		-- Exit: a player re-enters range -> resume Chasing directly (no
+		-- Countdown re-trigger - that only fires from a full Idle stop).
+		if target then
+			state.target = target
+			setMode(state, "Chasing")
+			return
+		end
+
+		-- Exit: arrived back at the spawn position -> Idle.
+		if horizontalDistance(root.Position, state.spawnPosition) <= ARRIVE_EPSILON then
+			setMode(state, "Idle")
+		end
+		return
 	end
 end
 
@@ -167,6 +265,7 @@ local function locomote(state)
 	elseif state.mode == "Idle" then
 		PathfindingAgent.StopPath(state)
 	end
+	-- Countdown: no movement, same as Idle - just don't touch the path.
 end
 
 ------------------------------------------------------------------------
@@ -174,25 +273,25 @@ end
 ------------------------------------------------------------------------
 
 local function getAgentRadius(model: Model)
-	return model:GetExtentsSize().X/2
+	return model:GetExtentsSize().X / 2
 end
 
 local function getAgentHeight(model: Model)
 	return model:GetExtentsSize().Y
 end
 
-local function spawnZombieAt(part: BasePart)
+local function spawnBossZombieAt(part: BasePart)
 	local modelName = part:GetAttribute("ModelName")
 	local template = modelName and NPCAssets:FindFirstChild(modelName)
 	if not template then
-		warn(`ZombieService: "{part.Name}" has no valid ModelName ("{tostring(modelName)}" under Assets.NPCs) - skipping`)
+		warn(`BossZombieService: "{part.Name}" has no valid ModelName ("{tostring(modelName)}" under Assets.NPCs) - skipping`)
 		return
 	end
 
 	local attackRangeValue = part:FindFirstChild("AttackRange")
 	local attackRangePart = attackRangeValue and attackRangeValue:IsA("ObjectValue") and attackRangeValue.Value
 	if not attackRangePart or not attackRangePart:IsA("BasePart") then
-		warn(`ZombieService: "{part.Name}" has no valid AttackRange BasePart - skipping`)
+		warn(`BossZombieService: "{part.Name}" has no valid AttackRange BasePart - skipping`)
 		return
 	end
 
@@ -209,7 +308,7 @@ local function spawnZombieAt(part: BasePart)
 		name = part.Name,
 		parent = zombiesFolder,
 		spawnCFrame = CFrame.new(part.Position),
-		agentParams = params
+		agentParams = params,
 	})
 
 	state.mode = "Idle"
@@ -219,6 +318,12 @@ local function spawnZombieAt(part: BasePart)
 	state.stageNumber = part:GetAttribute("Stage")
 	state.thinkInterval = THINK_INTERVAL_MIN + math.random() * (THINK_INTERVAL_MAX - THINK_INTERVAL_MIN)
 
+	state.bossName = part:GetAttribute("BossName") or "Zombie Boss"
+	state.bossCountdownSeconds = part:GetAttribute("BossCountdownSeconds")
+	state.bossCountdownRemaining = nil
+	state.bossCountdownLastTick = nil
+	state.lastStompTick = nil
+
 	for _, descendant in state.model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			descendant.Touched:Connect(function(hit)
@@ -227,21 +332,17 @@ local function spawnZombieAt(part: BasePart)
 		end
 	end
 
-	-- Warm up both loops once (forces the tracks to load) then immediately
-	-- silence them; explicitly resume Idle to match the starting state.mode -
-	-- setMode only fires Play/Stop calls on an actual transition, so without
-	-- this nothing would be playing at all until the first state change.
 	AnimationService.Play(state.model, "ZombieIdle", true, Enum.AnimationPriority.Idle)
 	AnimationService.Play(state.model, "ZombieWalk", true, Enum.AnimationPriority.Movement)
 	AnimationService.Stop(state.model, "ZombieIdle")
 	AnimationService.Stop(state.model, "ZombieWalk")
 	AnimationService.Resume(state.model, "ZombieIdle")
 
-	pcall(think, state) -- set a correct initial state before the loop starts
+	pcall(think, state)
 	task.spawn(PathfindingAgent.RunLoop, state, think, locomote, state.thinkInterval, LOCOMOTION_STEP)
 end
 
-function ZombieService.Start()
+function BossZombieService.Start()
 	zombiesFolder = workspace.Functional.Spawns:FindFirstChild("Zombies")
 	if not zombiesFolder then
 		zombiesFolder = Instance.new("Folder")
@@ -250,13 +351,10 @@ function ZombieService.Start()
 	end
 
 	for _, part in workspace.Functional.SpawnZombiePositions:GetChildren() do
-		-- Boss spawn points (BossCountdownSeconds attribute set) are spawned
-		-- and driven entirely by BossZombieService instead - skip here so
-		-- they aren't double-spawned.
-		if part:IsA("BasePart") and not part:GetAttribute("BossCountdownSeconds") then
-			spawnZombieAt(part)
+		if part:IsA("BasePart") and part:GetAttribute("BossCountdownSeconds") then
+			spawnBossZombieAt(part)
 		end
 	end
 end
 
-return ZombieService
+return BossZombieService

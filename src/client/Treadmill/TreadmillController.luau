@@ -1,7 +1,11 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
+local SoundService = game:GetService("SoundService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
+local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -14,6 +18,12 @@ function TreadmillController.Start()
 
 	spawnButton.Activated:Connect(function()
 		Net:RemoteEvent("ToggleSpawn"):FireServer()
+	end)
+
+	CollectionService:GetInstanceAddedSignal(Tags.TREADMILL):Connect(function(instance)
+		if instance:GetAttribute("OwnerId") == LocalPlayer.UserId then
+			SoundUtils.PlayLocalSound(SoundService.SFX.PlacedownTreadmill)
+		end
 	end)
 end
 

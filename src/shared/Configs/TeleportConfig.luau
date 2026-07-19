@@ -23,4 +23,8 @@ return {
 	{ TeleportTo = 8, WinsCost = 300, UIcolor = Color3.fromRGB(255, 80, 120) },
 	{ TeleportTo = 9, WinsCost = 600, UIcolor = Color3.fromRGB(121, 22, 102) },
 	{ TeleportTo = 10, WinsCost = 1000, UIcolor = Color3.fromRGB(60, 5, 34) },
+	{ TeleportTo = 11, WinsCost = 2000, UIcolor = Color3.fromRGB(60, 53, 26) },
+	{ TeleportTo = 12, WinsCost = 5000, UIcolor = Color3.fromRGB(148, 125, 34) },
+	{ TeleportTo = 13, WinsCost = 20000, UIcolor = Color3.fromRGB(192, 158, 22) },
+	{ TeleportTo = 14, WinsCost = 50000, UIcolor = Color3.fromRGB(255, 204, 0) },
 }
