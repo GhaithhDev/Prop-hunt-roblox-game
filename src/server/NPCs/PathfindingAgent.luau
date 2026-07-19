@@ -25,7 +25,7 @@ local PathfindingAgent = {}
 
 --//Configs
 local BasePathFindingConfig = require(ReplicatedStorage.Shared.Configs.BasePathFindingConfig)
-local DEBUG = false
+local DEBUG = true
 PathfindingAgent.DEFAULT_AGENT_PARAMS = {
 	AgentRadius = 2,
 	AgentHeight = 5,

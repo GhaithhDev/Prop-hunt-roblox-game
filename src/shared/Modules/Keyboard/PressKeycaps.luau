@@ -144,7 +144,11 @@ local function Update(dt)
         for _, _player in players do
             local character = _player.Character
             if character then
-                CheckHitbox(_player, character)
+                if character:FindFirstChild("Humanoid") and character.Humanoid.MoveDirection.Magnitude > .1 then
+                    local LevelService = require(ServerScriptService.Server.Level.LevelService)
+                    LevelService.GrantClickXp(_player)
+                end
+                --CheckHitbox(_player, character)
             end
             table.insert(ids,_player.UserId)
         end

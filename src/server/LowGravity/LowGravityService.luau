@@ -54,7 +54,7 @@ local function equipWing(player: Player)
 		or character:FindFirstChild("Torso")
 	if not backPart then return end
 
-	local backAttachment = backPart:FindFirstChild("BodyBackAttachment") or backPart:FindFirstChildWhichIsA("Attachment")
+	local backAttachment = backPart:FindFirstChild("BodyBackAttachment") or Instance.new("Attachment",backPart)
 	if not backAttachment then return end
 
 	local clone = WingAsset:Clone()

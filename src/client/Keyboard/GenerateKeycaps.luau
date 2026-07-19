@@ -1,6 +1,7 @@
 --//Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
+local RunService = game:GetService("RunService")
 
 --//Configs
 local SIZE_MULTI_ATTRIBUTE = "KeycapSizeMulti"
@@ -8,9 +9,14 @@ local KEY_CAP_SET_ATTRIBUTE = "KeycapSet"
 local KeycapsConfigs = require(ReplicatedStorage.Shared.Configs.KeycapConfigs)
 local TAGS = require(ReplicatedStorage.Shared.Configs.Tags)
 
+local UPDATE_RATE = 1 -- seconds
+local LOAD_DISTANCE = 300
+local UNLOAD_DISTANCE = 350
+
 --//Pacakges
 local Vector3Utils = require(ReplicatedStorage.Shared.Packages.Vector3Utils)
 
+local started = false
 local GenerateKeycaps = {}
 
 --//Helpers
@@ -33,6 +39,10 @@ local function computeGridDimensions(surface: BasePart): (number, number)
 end
 
 function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart, onKeycapGenerated: (() -> ())?)
+   if surface:GetAttribute("AlreadyGenerated") then 
+       return 
+   end
+   surface:SetAttribute("AlreadyGenerated",true)
    local gridSizeX, gridSizeY = surface.Size.X, surface.Size.Z
    local sizeMulti = surface:GetAttribute(SIZE_MULTI_ATTRIBUTE) or 1
    local keycapSize: number = KeycapsConfigs.KeycapBottomBaseSize * sizeMulti
@@ -73,6 +83,8 @@ function GenerateKeycaps.GenerateKeycapsFromSurface(surface: BasePart, onKeycapG
 end
 
 function GenerateKeycaps.Start()
+    if started then return end
+    started = true
     local surfaces = CollectionService:GetTagged(TAGS.GENERATE_KEYCAPS_SURFACE)
 
     local totalKeycaps = 0
@@ -92,13 +104,18 @@ function GenerateKeycaps.Start()
         end
     end
 
-    --[[for _, surface in surfaces do
+   for _, surface in surfaces do
         GenerateKeycaps.GenerateKeycapsFromSurface(surface, onKeycapGenerated)
         task.wait(.002)
-    end]]
+    end
+
+    CollectionService:GetInstanceAddedSignal(TAGS.GENERATE_KEYCAPS_SURFACE):Connect(function(surface: Instance)
+        GenerateKeycaps.GenerateKeycapsFromSurface(surface, onKeycapGenerated)
+    end)
 
     workspace:SetAttribute("KeycapsGenerationProgress", 100)
     workspace:SetAttribute("KeycapsGenerated", true)
 end
+
 
 return GenerateKeycaps
