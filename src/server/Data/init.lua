@@ -6,10 +6,10 @@ local ProfileStore = require(ReplicatedStorage.Shared.Packages.ProfileStore)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local PROFILE_TEMPLATE = require(ServerScriptService.Server.Data.Template)
 local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService)
-local SpeedService = require(ServerScriptService.Server.Speed.SpeedService)
+local InventoryService = require(ServerScriptService.Server.Inventory.InventoryService)
 
 local Players = game:GetService("Players")
-local Key = RunService:IsStudio() and "Studio_Store_17" or "Test_Store_5"
+local Key = RunService:IsStudio() and "Studio_Store_19" or "Test_Store_5"
 
 local PlayerStore = ProfileStore.New(Key, PROFILE_TEMPLATE)
 
@@ -44,7 +44,7 @@ local function PlayerAdded(player)
         DataManager.SetupLeaderstats(player)
 		DataManager.SyncAllToClient(player)
 		PressXpService.RecheckEquippedOption(player)
-		SpeedService.ApplySpeed(player)
+		InventoryService.ApplyEquippedEffects(player)
 
       else
          -- The player has left before the profile session started

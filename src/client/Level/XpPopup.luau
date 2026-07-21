@@ -68,13 +68,13 @@ function XpPopup.Start()
 	popupTemplate = mainGui:WaitForChild("+XpTemplate")
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
-	local speedValue = playerData:WaitForChild("Speed")
+	local shrinkValue = playerData:WaitForChild("Shrink")
 
-	local lastSpeed = speedValue.Value
-	speedValue:GetPropertyChangedSignal("Value"):Connect(function()
-		local newSpeed = speedValue.Value
-		local delta = newSpeed - lastSpeed
-		lastSpeed = newSpeed
+	local lastShrink = shrinkValue.Value
+	shrinkValue:GetPropertyChangedSignal("Value"):Connect(function()
+		local newShrink = shrinkValue.Value
+		local delta = newShrink - lastShrink
+		lastShrink = newShrink
 		if delta <= 0 then return end
 
 		local now = os.clock()

@@ -4,11 +4,11 @@ local MarketplaceService = game:GetService("MarketplaceService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
-local SpeedPassConfig = require(ReplicatedStorage.Shared.Configs.SpeedPassConfig)
+local ShrinkPassConfig = require(ReplicatedStorage.Shared.Configs.ShrinkPassConfig)
 
 local LocalPlayer = Players.LocalPlayer
 
-local SpeedPassController = {}
+local ShrinkPassController = {}
 
 local function tryShowLivePrice(label: TextLabel, productId: number)
 	task.spawn(function()
@@ -23,24 +23,24 @@ local function tryShowLivePrice(label: TextLabel, productId: number)
 	end)
 end
 
-function SpeedPassController.Start()
+function ShrinkPassController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local x2Speed = playerGui:WaitForChild("Main"):WaitForChild("RightIcons"):WaitForChild("x2Speed")
+	local x2Shrink = playerGui:WaitForChild("Main"):WaitForChild("RightIcons"):WaitForChild("x2Shrink")
 
-	local button = x2Speed:WaitForChild("Button")
-	local tierLabel = x2Speed:WaitForChild("TierLabel")
-	local priceLabel = x2Speed:WaitForChild("PriceLabel")
+	local button = x2Shrink:WaitForChild("Button")
+	local tierLabel = x2Shrink:WaitForChild("TierLabel")
+	local priceLabel = x2Shrink:WaitForChild("PriceLabel")
 
 	local currentNextTierProductId: number? = nil
 
 	local function refresh()
 		local status = Net:Invoke("GetShopStatus")
-		local owned = (status and status.SpeedPass) or {}
-		local nextTier = SpeedPassConfig.GetNextTier(owned)
+		local owned = (status and status.ShrinkPass) or {}
+		local nextTier = ShrinkPassConfig.GetNextTier(owned)
 
 		if nextTier then
-			tierLabel.Text = `{nextTier.Multiplier}x Speed`
-			local passes = MonetizationConfig.GamePasses.SpeedPass
+			tierLabel.Text = `{nextTier.Multiplier}x Shrink`
+			local passes = MonetizationConfig.GamePasses.ShrinkPass
 			currentNextTierProductId = passes and passes[nextTier.Id]
 
 			priceLabel.Visible = true
@@ -56,11 +56,11 @@ function SpeedPassController.Start()
 
 	button.Activated:Connect(function()
 		local status = Net:Invoke("GetShopStatus")
-		local owned = (status and status.SpeedPass) or {}
-		local nextTier = SpeedPassConfig.GetNextTier(owned)
+		local owned = (status and status.ShrinkPass) or {}
+		local nextTier = ShrinkPassConfig.GetNextTier(owned)
 		if not nextTier then return end
 
-		Net:RemoteEvent("RequestGamePassPurchase"):FireServer("SpeedPass", nextTier.Id)
+		Net:RemoteEvent("RequestGamePassPurchase"):FireServer("ShrinkPass", nextTier.Id)
 	end)
 
 	-- Roblox's own purchase-finished signal, already fired natively (and
@@ -76,4 +76,4 @@ function SpeedPassController.Start()
 	refresh()
 end
 
-return SpeedPassController
+return ShrinkPassController

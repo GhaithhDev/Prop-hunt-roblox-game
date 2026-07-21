@@ -30,7 +30,7 @@ return {
 			Green = 3609494450,
 			Blue = 3610059576
 		},
-		SpeedPass = {
+		ShrinkPass = {
         	Tier2 = 3610006200,
         	Tier4 = 3610006259,
         	Tier8 = 3610006311,
@@ -75,7 +75,7 @@ return {
         	3610007469, --10x
     	},
 
-		PlusPercentSpeed = {
+		PlusPercentShrink = {
 			FirstOption = 3610053456,
 			SecondOption = 3610053532,
 			ThirdOption = 3610053582

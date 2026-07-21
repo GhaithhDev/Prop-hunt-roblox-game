@@ -3,8 +3,8 @@ return {
 		WinAwarded = { Name = "WinAwarded", Type = "Event" },
 	},
 
-	Speed = {
-		SetCustomSpeed = { Name = "SetCustomSpeed", Type = "Event" },
+	Shrink = {
+		SetCustomSize = { Name = "SetCustomSize", Type = "Event" },
 	},
 
 	Treadmill = {
@@ -83,8 +83,8 @@ return {
 		AdminAnnouncement = { Name = "AdminAnnouncement", Type = "Event" },
 	},
 
-	PlusPercentSpeed = {
-		RequestPlusPercentSpeed = { Name = "RequestPlusPercentSpeed", Type = "Event" },
+	PlusPercentShrink = {
+		RequestPlusPercentShrink = { Name = "RequestPlusPercentShrink", Type = "Event" },
 	},
 
 	Zombies = {

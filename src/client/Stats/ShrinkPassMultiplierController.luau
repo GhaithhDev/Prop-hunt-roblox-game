@@ -5,22 +5,22 @@ local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 
 local LocalPlayer = Players.LocalPlayer
 
-local SpeedPassMultiplierController = {}
+local ShrinkPassMultiplierController = {}
 
-function SpeedPassMultiplierController.Start()
+function ShrinkPassMultiplierController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 	local label = playerGui:WaitForChild("Main"):WaitForChild("Stats"):WaitForChild("UpperContainer"):WaitForChild("LeftMultiplayer"):WaitForChild("Gamepass Multiplier")
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
-	local speedPassMultiplierValue = playerData:WaitForChild("SpeedPassMultiplier")
+	local shrinkPassMultiplierValue = playerData:WaitForChild("ShrinkPassMultiplier")
 
 	local function update()
-		label.Text = `Multiplier  x{NumberFormat.FormatDecimal(speedPassMultiplierValue.Value)}  (Gamepass)`
+		label.Text = `Multiplier  x{NumberFormat.FormatDecimal(shrinkPassMultiplierValue.Value)}  (Gamepass)`
 	end
 
-	speedPassMultiplierValue:GetPropertyChangedSignal("Value"):Connect(update)
+	shrinkPassMultiplierValue:GetPropertyChangedSignal("Value"):Connect(update)
 
 	update()
 end
 
-return SpeedPassMultiplierController
+return ShrinkPassMultiplierController

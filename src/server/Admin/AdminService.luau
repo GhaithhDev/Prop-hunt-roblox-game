@@ -50,7 +50,7 @@ local function handleAction(action: string, data: { [string]: any })
 	if action == "SetXpMultiplier" then
 		xpMultiplier = data.Multiplier
 		xpExpiresAt = os.time() + data.Duration
-		Net:RemoteEvent("Notify"):FireAllClients("success", `An admin activated a {data.Multiplier}x Speed boost for {data.Duration} seconds!`)
+		Net:RemoteEvent("Notify"):FireAllClients("success", `An admin activated a {data.Multiplier}x Shrink boost for {data.Duration} seconds!`)
 	elseif action == "SetWinsMultiplier" then
 		winsMultiplier = data.Multiplier
 		winsExpiresAt = os.time() + data.Duration

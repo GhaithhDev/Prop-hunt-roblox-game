@@ -60,23 +60,23 @@ local function getXpBoostMultiplier(stats: { [string]: any }): number
 	return (stats.XpBoostRemainingSeconds or 0) > 0 and 2 or 1
 end
 
--- Server: reads SpeedPassService's live state (recomputed fresh from owned
+-- Server: reads ShrinkPassService's live state (recomputed fresh from owned
 -- passes every call - always accurate). Client: reads the replicated
--- PlayerData.SpeedPassMultiplier value SpeedPassService periodically syncs
+-- PlayerData.ShrinkPassMultiplier value ShrinkPassService periodically syncs
 -- (display/prediction only, and only eventually consistent after a purchase -
--- see SpeedPassService's own comment for why polling is needed there).
-local function getSpeedPassMultiplier(stats: { [string]: any }): number
+-- see ShrinkPassService's own comment for why polling is needed there).
+local function getShrinkPassMultiplier(stats: { [string]: any }): number
 	if RunService:IsServer() then
 		local player = stats.Player
 		if not player then
 			return 1
 		end
 		-- Required inline (not at module top-level) to avoid a circular require:
-		-- SpeedPassService requires XpPerPress at its own top level.
-		local SpeedPassService = require(game:GetService("ServerScriptService").Server.SpeedPass.SpeedPassService)
-		return SpeedPassService.GetMultiplierForPlayer(player)
+		-- ShrinkPassService requires XpPerPress at its own top level.
+		local ShrinkPassService = require(game:GetService("ServerScriptService").Server.ShrinkPass.ShrinkPassService)
+		return ShrinkPassService.GetMultiplierForPlayer(player)
 	end
-	return stats.SpeedPassMultiplier or 1
+	return stats.ShrinkPassMultiplier or 1
 end
 
 -- Server-global, not per-player - reads ServerBoostService's live state
@@ -109,7 +109,7 @@ end
 
 local function calculateAmount(stats: { [string]: any }): number
 	local baseAmount = XpPerPressConfig.GetStepAmount(stats.EquippedPressOption or XpPerPressConfig.DefaultOption)
-	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats) * getXpBoostMultiplier(stats) * getSpeedPassMultiplier(stats) * getServerBoostMultiplier() * getAdminXpMultiplier()
+	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats) * getXpBoostMultiplier(stats) * getShrinkPassMultiplier(stats) * getServerBoostMultiplier() * getAdminXpMultiplier()
 	return math.floor(baseAmount * multiplier)
 end
 
@@ -142,7 +142,7 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
 	local equippedAuraValue = playerData and playerData:FindFirstChild("EquippedAura")
 	local xpBoostRemainingValue = playerData and playerData:FindFirstChild("XpBoostRemainingSeconds")
-	local speedPassMultiplierValue = playerData and playerData:FindFirstChild("SpeedPassMultiplier")
+	local shrinkPassMultiplierValue = playerData and playerData:FindFirstChild("ShrinkPassMultiplier")
 
 	return calculateAmount({
 		EquippedPressOption = equippedValue and equippedValue.Value,
@@ -151,7 +151,7 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 		Rebirths = rebirthsValue and rebirthsValue.Value,
 		EquippedTrail = equippedTrailValue and equippedTrailValue.Value,
 		EquippedAura = equippedAuraValue and equippedAuraValue.Value,
-		SpeedPassMultiplier = speedPassMultiplierValue and speedPassMultiplierValue.Value,
+		ShrinkPassMultiplier = shrinkPassMultiplierValue and shrinkPassMultiplierValue.Value,
 	})
 end
 

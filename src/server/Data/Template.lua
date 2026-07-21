@@ -1,6 +1,6 @@
 local Template = {
 	Wins = 0,
-	Speed = 0,
+	Shrink = 0,
 	Rebirths = 0,
 	Level = 1,
 	EquippedPressOption = 1,

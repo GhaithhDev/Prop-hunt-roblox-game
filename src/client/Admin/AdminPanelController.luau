@@ -74,7 +74,7 @@ function AdminPanelController.Start(controllers)
 		end
 	end)
 
-	wireMultiplierSection(settings:WaitForChild("SpeedBoost"), "SetXpMultiplier")
+	wireMultiplierSection(settings:WaitForChild("ShrinkBoost"), "SetXpMultiplier")
 	wireMultiplierSection(settings:WaitForChild("WinsBoost"), "SetWinsMultiplier")
 	wireAnnouncementSection(settings:WaitForChild("Announcement"))
 	wireSpawnTreadmillsSection(settings:WaitForChild("SpawnTreadmills"))

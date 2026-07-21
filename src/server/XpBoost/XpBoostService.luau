@@ -2,7 +2,7 @@
 	XpBoostService
 
 	Sells a temporary 2x XP-per-press boost in tiers defined by
-	src/shared/Configs/XpBoostConfig.luau (Shop's "x2 Speed" section).
+	src/shared/Configs/XpBoostConfig.luau (Shop's "x2 Shrink" section).
 	Tracked as a wall-clock expiry timestamp (DataManager "XpBoostExpiresAt"),
 	not a session timer, so it survives disconnects - purchases stack
 	additively on top of whatever time is already left, never discarding paid

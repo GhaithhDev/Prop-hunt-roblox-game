@@ -20,8 +20,8 @@ local fillYSize
 local fillTween
 local lastLevel
 
-local function UpdateUI(speedValue, levelValue)
-	local totalXp = speedValue.Value
+local function UpdateUI(shrinkValue, levelValue)
+	local totalXp = shrinkValue.Value
 	local currentLevel = levelValue.Value
 
 	if lastLevel and currentLevel > lastLevel then
@@ -37,7 +37,7 @@ local function UpdateUI(speedValue, levelValue)
 
 	levelLabel.Text = "Level " .. currentLevel
 	xpToNextLevelLabel.Text = NumberFormat.Format(xpIntoLevel) .. " / " .. NumberFormat.Format(xpNeededForLevel)
-	totalXpLabel.Text = NumberFormat.Format(totalXp) .. " Speed"
+	totalXpLabel.Text = NumberFormat.Format(totalXp) .. " Shrink"
 
 	local fraction = xpNeededForLevel > 0 and math.clamp(xpIntoLevel / xpNeededForLevel, 0, 1) or 1
 
@@ -61,17 +61,17 @@ function LevelBar.Start()
 	fillYSize = fillFrame.Size.Y
 
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
-	local speedValue = playerData:WaitForChild("Speed")
+	local shrinkValue = playerData:WaitForChild("Shrink")
 	local levelValue = playerData:WaitForChild("Level")
 
-	speedValue:GetPropertyChangedSignal("Value"):Connect(function()
-		UpdateUI(speedValue, levelValue)
+	shrinkValue:GetPropertyChangedSignal("Value"):Connect(function()
+		UpdateUI(shrinkValue, levelValue)
 	end)
 	levelValue:GetPropertyChangedSignal("Value"):Connect(function()
-		UpdateUI(speedValue, levelValue)
+		UpdateUI(shrinkValue, levelValue)
 	end)
 
-	UpdateUI(speedValue, levelValue)
+	UpdateUI(shrinkValue, levelValue)
 end
 
 return LevelBar

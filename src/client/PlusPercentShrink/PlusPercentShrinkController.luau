@@ -2,20 +2,20 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
-local PlusPercentSpeedConfig = require(ReplicatedStorage.Shared.Configs.PlusPercentSpeedConfig)
+local PlusPercentShrinkConfig = require(ReplicatedStorage.Shared.Configs.PlusPercentShrinkConfig)
 local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 
 local LocalPlayer = Players.LocalPlayer
 
 local OPTION_NAMES = { "FirstOption", "SecondOption", "ThirdOption" }
 
-local PlusPercentSpeedController = {}
+local PlusPercentShrinkController = {}
 
-function PlusPercentSpeedController.Start()
+function PlusPercentShrinkController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local feature = playerGui:WaitForChild("Main"):WaitForChild("Stats"):WaitForChild("PlusPercentSpeed")
+	local feature = playerGui:WaitForChild("Main"):WaitForChild("Stats"):WaitForChild("PlusPercentShrink")
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
-	local speedValue = playerData:WaitForChild("Speed")
+	local shrinkValue = playerData:WaitForChild("Shrink")
 
 	local tierLabels: { [string]: TextLabel } = {}
 
@@ -32,24 +32,24 @@ function PlusPercentSpeedController.Start()
 
 		if button then
 			button.Activated:Connect(function()
-				Net:RemoteEvent("RequestPlusPercentSpeed"):FireServer(optionName)
+				Net:RemoteEvent("RequestPlusPercentShrink"):FireServer(optionName)
 			end)
 		end
 	end
 
 	local function refreshPreviews()
-		local currentSpeed = speedValue.Value
+		local currentShrink = shrinkValue.Value
 		for optionName, tierLabel in tierLabels do
-			local percent = PlusPercentSpeedConfig[optionName]
+			local percent = PlusPercentShrinkConfig[optionName]
 			if percent then
-				local bonus = math.floor(currentSpeed * percent)
-				tierLabel.Text = `+{NumberFormat.Format(bonus)} Speed`
+				local bonus = math.floor(currentShrink * percent)
+				tierLabel.Text = `+{NumberFormat.Format(bonus)} Shrink`
 			end
 		end
 	end
 
-	speedValue:GetPropertyChangedSignal("Value"):Connect(refreshPreviews)
+	shrinkValue:GetPropertyChangedSignal("Value"):Connect(refreshPreviews)
 	refreshPreviews()
 end
 
-return PlusPercentSpeedController
+return PlusPercentShrinkController

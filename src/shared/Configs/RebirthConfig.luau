@@ -10,8 +10,8 @@ export type Tier = {
 -- entries to extend progression - no other code needs to change.
 -- RequiredLevel ramps gently at first (5/10/15/20) then accelerates, topping
 -- out at Level 400 for the 20th (max) rebirth - comfortably past the Level
--- 150 WalkSpeed cap (SpeedConfig), but far short of what the uncapped
--- Speed-stat->Level curve (LevelConfig) could otherwise demand.
+-- 150 shrink-scale cap (ShrinkConfig), but far short of what the uncapped
+-- Shrink-stat->Level curve (LevelConfig) could otherwise demand.
 -- Placeholder balance curve (tunable).
 RebirthConfig.Tiers = {
 	[1] = { RequiredLevel = 5, Multiplier = 2 },

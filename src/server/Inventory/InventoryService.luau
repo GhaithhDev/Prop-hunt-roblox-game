@@ -113,10 +113,19 @@ local function onRequestRobuxPurchase(player: Player, category: string, itemId: 
 	MonetizationService.PromptPurchaseById(player, productId)
 end
 
-local function applyEquippedVisuals(player: Player)
+local function applyEquippedEffects(player: Player)
 	local character = player.Character
 	local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
 	if not humanoidRootPart then return end
+
+	if DataManager.Get(player, "EquippedTrail") == nil then
+		-- Profile hasn't finished loading yet (this character spawned before
+		-- StartSessionAsync resolved) - skip instead of falling back to "no
+		-- trail". The next equip/unequip or respawn will call this again once
+		-- the profile is loaded, so this avoids permanently stranding
+		-- WalkSpeed at the no-trail default for the rest of the session.
+		return
+	end
 
 	for _, name in TRAIL_PART_NAMES do
 		local existing = humanoidRootPart:FindFirstChild(name)
@@ -135,6 +144,11 @@ local function applyEquippedVisuals(player: Player)
 			end
 			clone:Destroy()
 		end
+	end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.WalkSpeed = TrailsConfig.GetWalkSpeedForEquipped(equippedTrail)
 	end
 
 	local equippedAura = DataManager.Get(player, "EquippedAura") or ""
@@ -161,6 +175,12 @@ local function applyEquippedVisuals(player: Player)
 	end
 end
 
+-- Exposed so Data/init.lua can re-apply once the profile finishes loading,
+-- in case the character spawned first (see applyEquippedEffects' own guard).
+function InventoryService.ApplyEquippedEffects(player: Player)
+	applyEquippedEffects(player)
+end
+
 -- Clicking Equip on an already-equipped item unequips it instead - same
 -- remote handles both, toggled off the currently-equipped id.
 local function onEquipItem(player: Player, category: string, itemId: string)
@@ -181,18 +201,18 @@ local function onEquipItem(player: Player, category: string, itemId: string)
 
 	if isCurrentlyEquipped then
 		DataManager.Set(player, equippedKey, "")
-		applyEquippedVisuals(player)
+		applyEquippedEffects(player)
 		Net:RemoteEvent("Notify"):FireClient(player, "success", `Unequipped {item.Name}!`)
 	else
 		DataManager.Set(player, equippedKey, itemId)
-		applyEquippedVisuals(player)
+		applyEquippedEffects(player)
 		Net:RemoteEvent("Notify"):FireClient(player, "success", `Equipped {item.Name}!`)
 	end
 end
 
 local function onCharacterAdded(player: Player, character: Model)
 	character:WaitForChild("HumanoidRootPart", 5)
-	applyEquippedVisuals(player)
+	applyEquippedEffects(player)
 end
 
 local function onPlayerAdded(player: Player)

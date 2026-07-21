@@ -167,8 +167,8 @@ function ShopController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 	local scrollingFrame = playerGui:WaitForChild("Main"):WaitForChild("Shop"):WaitForChild("ScrollingFrame")
 
-	local x2SpeedFrame = scrollingFrame:WaitForChild("x2 SpeedFrame")
-	local background = x2SpeedFrame:WaitForChild("Background")
+	local x2ShrinkFrame = scrollingFrame:WaitForChild("x2 ShrinkFrame")
+	local background = x2ShrinkFrame:WaitForChild("Background")
 	local template = background:WaitForChild("BoostTierTemplate")
 
 	for index, item in XpBoostConfig do

@@ -1,10 +1,10 @@
 --[[
-	PlusPercentSpeedService
+	PlusPercentShrinkService
 
-	Sells a one-time flat "Speed" bonus equal to a configured percentage
-	(PlusPercentSpeedConfig) of whatever the player's Speed stat happens to be
+	Sells a one-time flat "Shrink" bonus equal to a configured percentage
+	(PlusPercentShrinkConfig) of whatever the player's Shrink stat happens to be
 	at the moment of purchase - repeatable, not permanent ownership, so this
-	registers 3 consumables (MonetizationConfig.DevProducts.PlusPercentSpeed)
+	registers 3 consumables (MonetizationConfig.DevProducts.PlusPercentShrink)
 	rather than using the GamePasses/OwnsPass pattern.
 ]]
 
@@ -13,29 +13,29 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
-local PlusPercentSpeedConfig = require(ReplicatedStorage.Shared.Configs.PlusPercentSpeedConfig)
+local PlusPercentShrinkConfig = require(ReplicatedStorage.Shared.Configs.PlusPercentShrinkConfig)
 local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
 local LevelService = require(ServerScriptService.Server.Level.LevelService)
 
-local PlusPercentSpeedService = {}
+local PlusPercentShrinkService = {}
 
 local function onOptionPurchased(player: Player, optionName: string)
-	local percent = PlusPercentSpeedConfig[optionName]
+	local percent = PlusPercentShrinkConfig[optionName]
 	if not percent then
-		warn(`PlusPercentSpeedService: no PlusPercentSpeedConfig entry for "{optionName}"`)
+		warn(`PlusPercentShrinkService: no PlusPercentShrinkConfig entry for "{optionName}"`)
 		return
 	end
 
-	local currentSpeed = DataManager.Get(player, "Speed") or 0
-	local bonus = math.floor(currentSpeed * percent)
+	local currentShrink = DataManager.Get(player, "Shrink") or 0
+	local bonus = math.floor(currentShrink * percent)
 	LevelService.GrantXp(player, bonus)
-	Net:RemoteEvent("Notify"):FireClient(player, "success", `+{NumberFormat.Format(bonus)} Speed!`)
+	Net:RemoteEvent("Notify"):FireClient(player, "success", `+{NumberFormat.Format(bonus)} Shrink!`)
 end
 
-local function onRequestPlusPercentSpeed(player: Player, optionName: string)
-	local productId = MonetizationConfig.DevProducts.PlusPercentSpeed and MonetizationConfig.DevProducts.PlusPercentSpeed[optionName]
+local function onRequestPlusPercentShrink(player: Player, optionName: string)
+	local productId = MonetizationConfig.DevProducts.PlusPercentShrink and MonetizationConfig.DevProducts.PlusPercentShrink[optionName]
 	if not productId or productId == 0 then
 		Net:RemoteEvent("Notify"):FireClient(player, "error", "That isn't purchasable yet.")
 		return
@@ -44,8 +44,8 @@ local function onRequestPlusPercentSpeed(player: Player, optionName: string)
 	MonetizationService.PromptPurchaseById(player, productId)
 end
 
-function PlusPercentSpeedService.Start()
-	local products = MonetizationConfig.DevProducts.PlusPercentSpeed
+function PlusPercentShrinkService.Start()
+	local products = MonetizationConfig.DevProducts.PlusPercentShrink
 	if products then
 		for optionName, productId in products do
 			if productId ~= 0 then
@@ -56,7 +56,7 @@ function PlusPercentSpeedService.Start()
 		end
 	end
 
-	Net:Connect("RequestPlusPercentSpeed", onRequestPlusPercentSpeed)
+	Net:Connect("RequestPlusPercentShrink", onRequestPlusPercentShrink)
 end
 
-return PlusPercentSpeedService
+return PlusPercentShrinkService

@@ -32,7 +32,7 @@ return {
 	},
 	{
 		Id = "AdminXpBoost",
-		DisplayName = "Admin Speed Boost",
+		DisplayName = "Admin Shrink Boost",
 		Scope = "Server",
 		ValueName = "AdminXpRemainingSeconds",
 		MultiplierValueName = "AdminXpMultiplier",

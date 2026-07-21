@@ -32,8 +32,8 @@ function RebirthController.Start()
 
 		oldRebirthLabel.Text = `Rebirth {status.Rebirths}`
 		newRebirthLabel.Text = `Rebirth {status.Rebirths + 1}`
-		oldMultiplierLabel.Text = `x{status.CurrentMultiplier} Speed`
-		newMultiplierLabel.Text = `x{status.NextMultiplier} Speed`
+		oldMultiplierLabel.Text = `x{status.CurrentMultiplier} Shrink`
+		newMultiplierLabel.Text = `x{status.NextMultiplier} Shrink`
 		levelRequirementLabel.Text = `Level {status.NextRequiredLevel}`
 		progressLabel.Text = `Level {status.Level}/{status.NextRequiredLevel}`
 

@@ -1,21 +1,21 @@
-local SpeedPassConfig = {}
+local ShrinkPassConfig = {}
 
 export type Tier = { Id: string, Multiplier: number }
 
 -- Order matters here (gating sequence) - MonetizationConfig.GamePasses itself
 -- is unordered, so this is the one source of truth for tier sequence. Id
--- must match the MonetizationConfig.GamePasses.SpeedPass key exactly.
-SpeedPassConfig.Tiers = {
+-- must match the MonetizationConfig.GamePasses.ShrinkPass key exactly.
+ShrinkPassConfig.Tiers = {
 	{ Id = "Tier2", Multiplier = 2 },
 	{ Id = "Tier4", Multiplier = 4 },
 	{ Id = "Tier8", Multiplier = 8 },
 	{ Id = "Tier16", Multiplier = 16 },
 } :: { Tier }
 
--- owned: { [tierId]: boolean }, e.g. GetShopStatus()'s SpeedPass field
+-- owned: { [tierId]: boolean }, e.g. GetShopStatus()'s ShrinkPass field
 -- client-side, or { [tierId] = MonetizationService.OwnsPass(...) } server-side.
-function SpeedPassConfig.GetNextTier(owned: { [string]: boolean }): Tier?
-	for _, tier in SpeedPassConfig.Tiers do
+function ShrinkPassConfig.GetNextTier(owned: { [string]: boolean }): Tier?
+	for _, tier in ShrinkPassConfig.Tiers do
 		if not owned[tier.Id] then
 			return tier
 		end
@@ -23,9 +23,9 @@ function SpeedPassConfig.GetNextTier(owned: { [string]: boolean }): Tier?
 	return nil
 end
 
-function SpeedPassConfig.GetMultiplierForOwned(owned: { [string]: boolean }): number
+function ShrinkPassConfig.GetMultiplierForOwned(owned: { [string]: boolean }): number
 	local multiplier = 1
-	for _, tier in SpeedPassConfig.Tiers do
+	for _, tier in ShrinkPassConfig.Tiers do
 		if owned[tier.Id] then
 			multiplier = tier.Multiplier
 		else
@@ -35,4 +35,4 @@ function SpeedPassConfig.GetMultiplierForOwned(owned: { [string]: boolean }): nu
 	return multiplier
 end
 
-return SpeedPassConfig
+return ShrinkPassConfig

@@ -5,7 +5,7 @@ local SoundService = game:GetService("SoundService")
 
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local NotificationConfig = require(ReplicatedStorage.Shared.Configs.NotificationConfig)
-local SpeedConfig = require(ReplicatedStorage.Shared.Configs.SpeedConfig)
+local ShrinkConfig = require(ReplicatedStorage.Shared.Configs.ShrinkConfig)
 
 --//Packages
 local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
@@ -107,10 +107,10 @@ function NotificationsController.NotifyLevelUp(oldLevel: number, newLevel: numbe
 
 	local clone = levelUpTemplate:Clone()
 	local levelLabel = clone:WaitForChild("LevelLabel")
-	local speedLabel = clone:WaitForChild("SpeedLabel")
+	local shrinkLabel = clone:WaitForChild("ShrinkLabel")
 
 	levelLabel.Text = `Level {oldLevel} => Level {newLevel}`
-	speedLabel.Text = `Speed {SpeedConfig.GetSpeedForLevel(oldLevel)} => Speed {SpeedConfig.GetSpeedForLevel(newLevel)}`
+	shrinkLabel.Text = `Shrink {ShrinkConfig.GetShrinkScoreForLevel(oldLevel)} => Shrink {ShrinkConfig.GetShrinkScoreForLevel(newLevel)}`
 
 	local fadeTargets = buildFadeTargets(clone)
 	hideFadeTargets(fadeTargets)
