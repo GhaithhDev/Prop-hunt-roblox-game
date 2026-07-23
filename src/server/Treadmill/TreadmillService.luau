@@ -22,15 +22,6 @@ local PLAYER_TREADMILL_ASSETS = ReplicatedStorage.Shared.Assets.PlayerTreadmills
 -- UFOTreadmill) - just a Multiplier attribute baked in, no GamePass gating.
 local EVENT_TREADMILL_ASSETS = ReplicatedStorage.Shared.Assets.EventTreadmills
 
--- Areas.Safe is a Folder of Parts (multiple safe zones can exist at once) -
--- collected once at load time since the zones are static level geometry.
-local SafeZoneParts: { BasePart } = {}
-for _, part in workspace.Functional.Areas.Safe:GetChildren() do
-	if part:IsA("BasePart") then
-		table.insert(SafeZoneParts, part)
-	end
-end
-
 local ATTR_REQUIRES_GAMEPASS = "RequiresGamePass"
 local ATTR_GAMEPASS_NAME = "GamePassName"
 local GATE_NOTIFY_DEBOUNCE = 3 -- seconds between repeat notify+prompt for the same locked-out player
@@ -46,20 +37,6 @@ local runAnimTracks: { [Player]: AnimationTrack } = {}
 local trackedCharacter: { [Player]: Model } = {}
 local standingMultiplier: { [Player]: number } = {}
 local gateDebounce: { [Player]: boolean } = {}
-
-local function isInsideSafeZone(position: Vector3): boolean
-	for _, safeZonePart in SafeZoneParts do
-		local halfSize = safeZonePart.Size / 2
-		local localPosition = safeZonePart.CFrame:PointToObjectSpace(position)
-		if math.abs(localPosition.X) <= halfSize.X
-			and math.abs(localPosition.Y) <= halfSize.Y
-			and math.abs(localPosition.Z) <= halfSize.Z
-		then
-			return true
-		end
-	end
-	return false
-end
 
 local function aabbOverlap(centerA: Vector3, halfA: Vector3, centerB: Vector3, halfB: Vector3, margin: number): boolean
 	local delta = centerA - centerB
@@ -203,10 +180,6 @@ local function spawnPlayerTreadmill(player: Player)
 	end
 
 	local spawnCFrame = character:GetPivot()
-	if not isInsideSafeZone(spawnCFrame.Position) then
-		Net:RemoteEvent("Notify"):FireClient(player, "error", "You can only spawn a treadmill in the Safe zone!")
-		return
-	end
 
 	local template = pickTreadmillTemplateForPlayer(player)
 	if not template then

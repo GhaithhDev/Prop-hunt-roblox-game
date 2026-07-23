@@ -13,7 +13,7 @@ export type StageEntry = {
 --   MonetizationConfig.DevProducts.SkipToStage entry (for the Robux skip).
 -- WinsCost: Wins price for the free/grind path.
 -- UIcolor: background tint applied to the generated frame.
-return {
+local Stages = {
 	{ TeleportTo = 2, WinsCost = 2, UIcolor = Color3.fromRGB(60, 245, 255) },
 	{ TeleportTo = 3, WinsCost = 6, UIcolor = Color3.fromRGB(60, 255, 140) },
 	{ TeleportTo = 4, WinsCost = 20, UIcolor = Color3.fromRGB(100, 255, 80) },
@@ -27,4 +27,17 @@ return {
 	{ TeleportTo = 12, WinsCost = 5000, UIcolor = Color3.fromRGB(148, 125, 34) },
 	{ TeleportTo = 13, WinsCost = 20000, UIcolor = Color3.fromRGB(192, 158, 22) },
 	{ TeleportTo = 14, WinsCost = 50000, UIcolor = Color3.fromRGB(255, 204, 0) },
+}
+
+-- Fixed, hand-placed positions to teleport a player back to (e.g. after a Win)
+-- without relying on streamed-in Workspace parts like PlayerSpawners, which
+-- aren't guaranteed to have streamed in yet under StreamingEnabled. Keyed by
+-- world number - only World 1 exists so far.
+local WorldTeleportPositions = {
+	[1] = Vector3.new(0.555, 8.786, 87.534),
+}
+
+return {
+	Stages = Stages,
+	WorldTeleportPositions = WorldTeleportPositions,
 }

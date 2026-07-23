@@ -20,7 +20,7 @@ WinsConfig.WinsByStage = {
 }
 
 function WinsConfig.GetWinsForStage(stage: number): number?
-	return WinsConfig.WinsByStage[stage]
+	return WinsConfig.WinsByStage[stage] or WinsConfig.WinsByStage[tonumber(stage)]
 end
 
 return WinsConfig

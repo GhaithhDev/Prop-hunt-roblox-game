@@ -69,7 +69,7 @@ function TeleportController.Start()
 	local scrollingFrame = playerGui:WaitForChild("Main"):WaitForChild("TeleportStage"):WaitForChild("ScrollingFrame")
 	local template = scrollingFrame:WaitForChild("UIListLayout"):WaitForChild("StageTemplateFrame")
 
-	for index, item in TeleportConfig do
+	for index, item in TeleportConfig.Stages do
 		local clone = template:Clone()
 		clone.Name = `Stage{item.TeleportTo}`
 		clone.LayoutOrder = index

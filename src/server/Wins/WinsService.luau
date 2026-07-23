@@ -12,8 +12,9 @@ local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService
 local WinsMultiplierService = require(ServerScriptService.Server.WinsMultiplier.WinsMultiplierService)
 local AdminService = require(ServerScriptService.Server.Admin.AdminService)
 
-local TELEPORT_OFFSET = Vector3.new(0, 3, 0)
 local DEBOUNCE_TIME = 1
+
+local WIN_PART_BILLBOARD_TEMPLATE = ReplicatedStorage.Shared.Assets.Billbaords.WinPart
 
 local WinsService = {}
 
@@ -25,7 +26,15 @@ local function InitWinPart(part)
 		warn("Stage attribute is not set for ", part)
 		return
 	end
-	part.BillboardGui.AmountofWins.Text = "+" .. NumberFormat.Format(stage) .. " Wins"
+
+	local billboardGui = part:FindFirstChild("BillboardGui")
+	if not billboardGui then
+		billboardGui = WIN_PART_BILLBOARD_TEMPLATE:Clone()
+		billboardGui.Name = "BillboardGui"
+		billboardGui.Parent = part
+	end
+
+	billboardGui.AmountofWins.Text = "+" .. NumberFormat.Format(stage) .. " Wins"
 end
 
 local function OnWinHitboxTouched(part, hit)
@@ -57,11 +66,10 @@ local function OnWinHitboxTouched(part, hit)
 	DataManager.Add(player, "Wins", winsAmount)
 	PressXpService.RecheckEquippedOption(player)
 
-	local spawner = workspace.Functional.PlayerSpawners:GetChildren()[1]
-	if spawner then
-		character:PivotTo(spawner.CFrame + TELEPORT_OFFSET)
-	end
-
+	-- Teleporting back to spawn is done client-side (see WinsTeleportController) -
+	-- the client owns physics simulation of its own network-owned character, so
+	-- pivoting it here on the server fights that simulation instead of just
+	-- moving it.
 	Net:RemoteEvent("WinAwarded"):FireClient(player)
 end
 

@@ -25,7 +25,7 @@ local pendingRevive: { [Player]: number } = {}
 -- TeleportController, which generates the stage frames from the same config)
 -- - no need to cache it into a separate lookup table, just search it directly.
 local function getStageConfig(stageNumber: number): TeleportConfig.StageEntry?
-	for _, item in TeleportConfig do
+	for _, item in TeleportConfig.Stages do
 		if item.TeleportTo == stageNumber then
 			return item
 		end

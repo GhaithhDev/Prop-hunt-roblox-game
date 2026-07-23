@@ -17,7 +17,9 @@ local UNEQUIP_COLOR = Color3.fromRGB(220, 60, 60)
 
 local function tryShowLivePrice(button: TextButton, productId: number)
 	local label = button:FindFirstChildOfClass("TextLabel")
-	if not label then return end
+	if not label then
+		return
+	end
 
 	task.spawn(function()
 		local ok, info = pcall(function()
@@ -49,10 +51,33 @@ function InventoryController.Start()
 	local cardsByProductId: { [number]: Frame } = {}
 	local cardsByCategory: { [string]: { [string]: Frame } } = {}
 
-	local function applyCardState(card: Frame, owned: boolean, equipped: boolean)
+	local function applyCardState(
+		card: Frame,
+		owned: boolean,
+		equipped: boolean,
+		itemId: string,
+		category: string,
+		config
+	)
 		local buyWinsFrame = card:FindFirstChild("BuywithWins")
 		local buyRobuxFrame = card:FindFirstChild("BuywithRobux")
 		local equipFrame = card:FindFirstChild("Equip")
+
+		if category == CATEGORIES[1].Category then
+			local shrinkMultiLabel = card:WaitForChild("Shrink Multi")
+			local walkSpeedLabel = card:WaitForChild("WalkSpeed")
+			local titleLabel = card:WaitForChild("Title")
+
+			if shrinkMultiLabel then
+				shrinkMultiLabel.Text = `x{NumberFormat.FormatDecimal(config.Items[itemId].Multiplier)} Shrink Boost`
+			end
+			if walkSpeedLabel then
+				walkSpeedLabel.Text = `{NumberFormat.Format(config.Items[itemId].WalkSpeed)} Walk Speed`
+			end
+			if titleLabel then
+				titleLabel.Text = config.Items[itemId].Name
+			end
+		end
 
 		if buyWinsFrame then
 			buyWinsFrame.Visible = not owned
@@ -75,7 +100,9 @@ function InventoryController.Start()
 
 	local function buildCard(categoryEntry, itemId: string, scrollingFrame: Instance): Frame?
 		local card = scrollingFrame:FindFirstChild(itemId)
-		if not card then return nil end
+		if not card then
+			return nil
+		end
 
 		local item = categoryEntry.Config.Items[itemId]
 
@@ -135,7 +162,9 @@ function InventoryController.Start()
 	end
 
 	local function applyStatus()
-		if not lastStatus then return end
+		if not lastStatus then
+			return
+		end
 
 		for _, categoryEntry in CATEGORIES do
 			local statusList = lastStatus[categoryEntry.GamePassCategory] or {}
@@ -149,7 +178,14 @@ function InventoryController.Start()
 			for itemId, card in cardsByCategory[categoryEntry.Category] do
 				local statusItem = statusById[itemId]
 				local owned = statusItem ~= nil and statusItem.Owned
-				applyCardState(card, owned, owned and itemId == equippedId)
+				applyCardState(
+					card,
+					owned,
+					owned and itemId == equippedId,
+					itemId,
+					categoryEntry.Category,
+					categoryEntry.Config
+				)
 			end
 		end
 	end
@@ -163,7 +199,9 @@ function InventoryController.Start()
 	-- (already fired natively) - refresh so the card flips to Owned without
 	-- the player needing to close/reopen Inventory.
 	MarketplaceService.PromptProductPurchaseFinished:Connect(function(userId, productId, isPurchased)
-		if not isPurchased or userId ~= LocalPlayer.UserId then return end
+		if not isPurchased or userId ~= LocalPlayer.UserId then
+			return
+		end
 		if cardsByProductId[productId] then
 			refreshStatus()
 		end

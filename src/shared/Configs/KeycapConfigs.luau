@@ -10,7 +10,9 @@ Keycaps.PressUpTime = 0.3
 Keycaps.ClickSoundCooldown = 0.08
 Keycaps.ServerTickRate = .05
 
+Keycaps.RenderDistanceEnabled = true
 Keycaps.KeycapRenderDistance = 200
+Keycaps.KeycapUnloadDistance = 250
 Keycaps.RenderRate = 1
 
 return Keycaps 
