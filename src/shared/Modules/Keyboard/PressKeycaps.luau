@@ -85,13 +85,14 @@ local function ReleaseAll()
     table.clear(localDownKeycaps)
 end
 
-local function CheckHitbox(player: Player,character)
+local function CheckHitbox(player: Player,character: Model)
     
     local params = OverlapParams.new()
     params.FilterType = Enum.RaycastFilterType.Exclude
     params.FilterDescendantsInstances = {character}
 
-    local parts = workspace:GetPartBoundsInBox(character:GetPivot(), KeycapsConfigs.PressHitboxSize, params)
+    local hitboxSize = character:GetExtentsSize()
+    local parts = workspace:GetPartBoundsInBox(character:GetPivot(), hitboxSize, params)
     local currentlyDown = {}
 
     if RunService:IsServer() then

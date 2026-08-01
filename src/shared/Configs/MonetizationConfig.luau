@@ -79,6 +79,8 @@ return {
 			FirstOption = 3610053456,
 			SecondOption = 3610053532,
 			ThirdOption = 3610053582
-		}
+		},
+
+		x2Win = 3611329999
 	},
 }

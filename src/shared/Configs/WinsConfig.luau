@@ -17,6 +17,11 @@ WinsConfig.WinsByStage = {
 	[13] = 25000,
 	[14] = 50000,
 	[15] = 150000,
+	[16] = 250000,
+	[17] = 500000,
+	[18] = 1000000,
+	[19] = 2000000,
+	[20] = 4000000,
 }
 
 function WinsConfig.GetWinsForStage(stage: number): number?

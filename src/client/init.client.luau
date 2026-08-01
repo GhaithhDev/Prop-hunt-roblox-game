@@ -1,6 +1,3 @@
-task.spawn(function()
-	require(script.Keyboard.GenerateKeycaps).Start()
-end)
 require(script.Data.WaitForDataController)
 
 local Controllers = {}

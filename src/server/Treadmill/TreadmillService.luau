@@ -21,7 +21,6 @@ local PLAYER_TREADMILL_ASSETS = ReplicatedStorage.Shared.Assets.PlayerTreadmills
 -- Admin-spawned temporary event treadmills (e.g. RadioactiveTreadmill,
 -- UFOTreadmill) - just a Multiplier attribute baked in, no GamePass gating.
 local EVENT_TREADMILL_ASSETS = ReplicatedStorage.Shared.Assets.EventTreadmills
-
 local ATTR_REQUIRES_GAMEPASS = "RequiresGamePass"
 local ATTR_GAMEPASS_NAME = "GamePassName"
 local GATE_NOTIFY_DEBOUNCE = 3 -- seconds between repeat notify+prompt for the same locked-out player
@@ -50,9 +49,19 @@ local function overlapsExistingTreadmill(candidate: Model): boolean
 	local candidateHalf = candidateSize / 2
 
 	for _, treadmill in CollectionService:GetTagged(Tags.TREADMILL) do
-		if not treadmill:IsDescendantOf(workspace) then continue end
+		if not treadmill:IsDescendantOf(workspace) then
+			continue
+		end
 		local otherCFrame, otherSize = treadmill:GetBoundingBox()
-		if aabbOverlap(candidateCFrame.Position, candidateHalf, otherCFrame.Position, otherSize / 2, TreadmillConfig.SpawnOverlapMargin) then
+		if
+			aabbOverlap(
+				candidateCFrame.Position,
+				candidateHalf,
+				otherCFrame.Position,
+				otherSize / 2,
+				TreadmillConfig.SpawnOverlapMargin
+			)
+		then
 			return true
 		end
 	end
@@ -105,9 +114,9 @@ local function getGroundY(character: Model): number
 	local result = workspace:Raycast(origin, Vector3.new(0, -50, 0), raycastParams)
 
 	if result then
+		print(result.Instance)
 		return result.Position.Y
 	end
-
 	local hipHeight = humanoid and humanoid.HipHeight or 2
 	return origin.Y - hipHeight - rootPart.Size.Y / 2
 end
@@ -147,11 +156,22 @@ local function pickTreadmillTemplateForPlayer(player: Player): Model?
 	local bestMultiplier = -1
 
 	for _, model in PLAYER_TREADMILL_ASSETS:GetChildren() do
-		if not model:IsA("Model") then continue end
+		if not model:IsA("Model") then
+			continue
+		end
 
 		local requiresGamePass = model:GetAttribute(ATTR_REQUIRES_GAMEPASS)
 		local gamePassName = model:GetAttribute(ATTR_GAMEPASS_NAME)
-		local eligible = not requiresGamePass or (gamePassName and MonetizationService.OwnsPass(player, "Treadmills", gamePassName))
+		local rebirthRequirement = model:GetAttribute("RebirthRequirement")
+		local eligible = not requiresGamePass
+			or (gamePassName and MonetizationService.OwnsPass(player, "Treadmills", gamePassName))
+
+		if rebirthRequirement then
+			local playerRebirth = DataManager.Get(player, "Rebirths") or 0
+			if playerRebirth < rebirthRequirement then
+				eligible = false
+			end
+		end 
 
 		if eligible then
 			local multiplier = model:GetAttribute("Multiplier") or 1
@@ -167,7 +187,9 @@ end
 
 local function destroyPlayerTreadmill(player: Player)
 	local treadmill = ownedTreadmills[player]
-	if not treadmill then return end
+	if not treadmill then
+		return
+	end
 	ownedTreadmills[player] = nil
 	treadmill:Destroy()
 end
@@ -178,7 +200,12 @@ local function spawnPlayerTreadmill(player: Player)
 		warn(`TreadmillService: {player.Name} tried to spawn a treadmill with no character`)
 		return
 	end
+	local humanoid = character:FindFirstChildWhichIsA("Humanoid")
 
+	if not humanoid or humanoid.FloorMaterial == Enum.Material.Air then
+		Net:RemoteEvent("Notify"):FireClient(player, "error", "Can't spawn treadmill in air")
+		return
+	end
 	local spawnCFrame = character:GetPivot()
 
 	local template = pickTreadmillTemplateForPlayer(player)
@@ -240,16 +267,22 @@ end
 
 local function getOrCreateRunTrack(player: Player): AnimationTrack?
 	local character = player.Character
-	if not character then return nil end
+	if not character then
+		return nil
+	end
 
 	if trackedCharacter[player] == character and runAnimTracks[player] then
 		return runAnimTracks[player]
 	end
 
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return nil end
+	if not humanoid then
+		return nil
+	end
 	local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator", 5)
-	if not animator then return nil end
+	if not animator then
+		return nil
+	end
 
 	local animate = character:WaitForChild("Animate", 5)
 	local runFolder = animate and animate:WaitForChild("run", 5)
@@ -260,7 +293,9 @@ local function getOrCreateRunTrack(player: Player): AnimationTrack?
 	end
 
 	local oldTrack = runAnimTracks[player]
-	if oldTrack then oldTrack:Stop() end
+	if oldTrack then
+		oldTrack:Stop()
+	end
 
 	local track = animator:LoadAnimation(runAnim)
 	track.Looped = true
@@ -269,12 +304,18 @@ local function getOrCreateRunTrack(player: Player): AnimationTrack?
 	return track
 end
 
-local function notifyAndPromptLockedTreadmill(plr: Player, passId: string)
-	if gateDebounce[plr] then return end
-	gateDebounce[plr] = true
+local function addDebounce(player: Player)
+	gateDebounce[player] = true
 	task.delay(GATE_NOTIFY_DEBOUNCE, function()
-		gateDebounce[plr] = nil
+		gateDebounce[player] = nil
 	end)
+end
+
+local function notifyAndPromptLockedTreadmill(plr: Player, passId: string)
+	if gateDebounce[plr] then
+		return
+	end
+	addDebounce(plr)
 
 	local productId = MonetizationConfig.GamePasses.Treadmills[passId]
 	if not productId or productId == 0 then
@@ -282,6 +323,14 @@ local function notifyAndPromptLockedTreadmill(plr: Player, passId: string)
 		return
 	end
 	MonetizationService.PromptPurchaseById(plr, productId)
+end
+
+local function onRebirthLocked(player: Player, rebirthReq: number)
+	if gateDebounce[player] then
+		return
+	end
+	addDebounce(player)
+	Net:RemoteEvent("Notify"):FireClient(player,"error","Need " .. rebirthReq .. " Rebirth")
 end
 
 local function updateTreadmills()
@@ -300,14 +349,25 @@ local function updateTreadmills()
 		local ownerId = treadmill:GetAttribute("OwnerId")
 		local multiplier = treadmill:GetAttribute("Multiplier") or 1
 		local passId = treadmill:GetAttribute(ATTR_REQUIRES_GAMEPASS) and treadmill:GetAttribute(ATTR_GAMEPASS_NAME)
+		local rebirthRequirement = treadmill:GetAttribute("RebirthRequirement")
 
 		for plr in findStandingPlayers(treadmill) do
-			if currentlyStanding[plr] then continue end -- already claimed by a higher-priority event treadmill
-			if ownerId and ownerId ~= 0 and ownerId ~= plr.UserId then continue end -- someone else's personal treadmill: scenery only
+			if currentlyStanding[plr] then
+				continue
+			end -- already claimed by a higher-priority event treadmill
+			if ownerId and ownerId ~= 0 and ownerId ~= plr.UserId then
+				continue
+			end -- someone else's personal treadmill: scenery only
+			local playerRebirth = DataManager.Get(plr, "Rebirths") or 0
 
 			if passId and not MonetizationService.OwnsPass(plr, "Treadmills", passId) then
 				notifyAndPromptLockedTreadmill(plr, passId)
 				continue -- locked: no multiplier/XP benefit for non-owners
+			end
+
+			if rebirthRequirement and playerRebirth < rebirthRequirement then
+				onRebirthLocked(plr, rebirthRequirement)
+				continue
 			end
 
 			currentlyStanding[plr] = { multiplier = multiplier, treadmill = treadmill }
@@ -324,7 +384,11 @@ local function updateTreadmills()
 			end
 			standingMultiplier[plr] = multiplier
 			local track = getOrCreateRunTrack(plr)
-			if track and not track.IsPlaying then track:Play() end
+			if track and not track.IsPlaying then
+				print(track)
+				print("playing run track")
+				track:Play()
+			end
 			LevelService.GrantXp(plr, XpPerPress.GetAmountForPlayer(plr))
 		else
 			if standingMultiplier[plr] ~= nil then
@@ -332,7 +396,9 @@ local function updateTreadmills()
 			end
 			standingMultiplier[plr] = nil
 			local track = runAnimTracks[plr]
-			if track and track.IsPlaying then track:Stop() end
+			if track and track.IsPlaying then
+				track:Stop()
+			end
 		end
 
 		-- Auto-despawn a player's personal treadmill the moment they're no longer
@@ -351,8 +417,16 @@ end
 -- Only one spawn point exists, so a new spawn replaces whatever event
 -- treadmill is currently active rather than stacking/overlapping with it.
 function TreadmillService.SpawnEventTreadmill(name: string, duration: number)
-	local template = EVENT_TREADMILL_ASSETS:FindFirstChild(name)
-	if not template or not template:IsA("Model") then
+	local lowerName = name:lower()
+	local template: Model? = nil
+	for _, child in EVENT_TREADMILL_ASSETS:GetChildren() do
+		if child:IsA("Model") and child.Name:lower() == lowerName then
+			template = child
+			break
+		end
+	end
+
+	if not template then
 		warn(`TreadmillService: "{name}" has no matching Model in Assets.EventTreadmills - skipping`)
 		return
 	end

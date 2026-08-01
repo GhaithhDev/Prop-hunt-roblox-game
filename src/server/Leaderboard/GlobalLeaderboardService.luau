@@ -1,7 +1,7 @@
 --[[
 	GlobalLeaderboardService
 
-	Populates the two world signboards under Workspace.Functional.GlobalLeaderboards
+	Populates the three world signboards under Workspace.Functional.GlobalLeaderboards
 	directly (they're Workspace instances, not per-player StarterGui, so normal
 	replication shows the result to everyone - no remotes/client controller needed).
 
@@ -23,16 +23,37 @@ local DataManager = require(ServerScriptService.Server.Data.Manager)
 
 local GlobalLeaderboardService = {}
 
+-- Formats a raw seconds count as "XdYh"/"XhYm"/"Xm" for the TimePlayed board,
+-- since NumberFormat.Format's K/M/B suffixes read as a score, not a duration.
+local function formatPlayTime(totalSeconds: number): string
+	local minutes = totalSeconds // 60
+	local hours = minutes // 60
+	local days = hours // 24
+
+	if days > 0 then
+		return `{days}d {hours % 24}h`
+	elseif hours > 0 then
+		return `{hours}h {minutes % 60}m`
+	end
+	return `{minutes}m`
+end
+
 local boards = {
 	{
 		Store = DataStoreService:GetOrderedDataStore("GlobalLevelLeaderboard"),
-		BoardPart = workspace.Functional.GlobalLeaderboards.LevelLeaderboard,
+		BoardPart = workspace.Functional.GlobalLeaderboards.Level.LevelLeaderboard,
 		DataKey = "Level",
 	},
 	{
 		Store = DataStoreService:GetOrderedDataStore("GlobalWinsLeaderboard"),
-		BoardPart = workspace.Functional.GlobalLeaderboards.WinsLeaderboard,
+		BoardPart = workspace.Functional.GlobalLeaderboards.Wins.WinsLeaderboard,
 		DataKey = "Wins",
+	},
+	{
+		Store = DataStoreService:GetOrderedDataStore("GlobalTimePlayedLeaderboard"),
+		BoardPart = workspace.Functional.GlobalLeaderboards.TimePlayed.GuiPart,
+		DataKey = "TimePlayed",
+		Format = formatPlayTime,
 	},
 }
 
@@ -118,7 +139,10 @@ local function refreshBoard(board)
 
 		if rankLabel then rankLabel.Text = tostring(rank) end
 		if nameLabel then nameLabel.Text = getPlayerName(userId) end
-		if valueLabel then valueLabel.Text = NumberFormat.Format(entry.value) end
+		if valueLabel then
+			local format = board.Format or NumberFormat.Format
+			valueLabel.Text = format(entry.value)
+		end
 
 		row.Parent = scrollingFrame
 	end
@@ -146,6 +170,18 @@ function GlobalLeaderboardService.Start()
 			task.wait(LeaderboardConfig.DisplayRefreshInterval)
 			for _, board in boards do
 				refreshBoard(board)
+			end
+		end
+	end)
+
+	-- No other system tracks play time, so accrue it here: one second per
+	-- connected player per tick, which syncPlayerStats then pushes upstream
+	-- like any other stat once it changes.
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			for _, player in Players:GetPlayers() do
+				DataManager.Add(player, "TimePlayed", 1)
 			end
 		end
 	end)

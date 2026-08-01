@@ -1,8 +1,8 @@
 local ShrinkConfig = {}
 
 ShrinkConfig.BaseScale = 1.0
-ShrinkConfig.MinScale = 0.1
-ShrinkConfig.MaxLevel = 170
+ShrinkConfig.MinScale = 0.2
+ShrinkConfig.MaxLevel = 150
 
 -- Linear ramp from BaseScale (level 1) down to MinScale (level 150).
 -- Precomputed so individual levels can be hand-tuned here without touching code.
@@ -22,8 +22,7 @@ ShrinkConfig.ScaleByLevel = {
 	[121] = 0.356, [122] = 0.35, [123] = 0.345, [124] = 0.34, [125] = 0.334, [126] = 0.329, [127] = 0.323, [128] = 0.318, [129] = 0.313, [130] = 0.307,
 	[131] = 0.302, [132] = 0.297, [133] = 0.291, [134] = 0.286, [135] = 0.281, [136] = 0.275, [137] = 0.27, [138] = 0.264, [139] = 0.259, [140] = 0.254,
 	[141] = 0.248, [142] = 0.243, [143] = 0.238, [144] = 0.232, [145] = 0.227, [146] = 0.221, [147] = 0.216, [148] = 0.211, [149] = 0.205, [150] = 0.2,
-	[151] = 0.196, [152] = 0.191, [153] = 0.186, [154] = 0.181, [155] = 0.176, [156] = 0.171, [157] = 0.166, [158] = 0.161, [159] = 0.156, [160] = 0.151,
-	[161] = 0.146, [162] = 0.141, [163] = 0.136, [164] = 0.131, [165] = 0.126, [166] = 0.121, [167] = 0.116, [168] = 0.111, [169] = 0.106, [170] = 0.1,
+
 }
 
 function ShrinkConfig.GetScaleForLevel(level: number): number
