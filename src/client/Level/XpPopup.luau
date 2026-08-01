@@ -12,7 +12,7 @@ local XpPopup = {}
 
 local lastPopupTime = 0
 
-local OFFSET_MAGNITUDES = { 0.001, 0.1 }
+local OFFSET_MAGNITUDES = { 0.001, 0.25 }
 local BOUNCE_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 local DRIFT_INFO = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 

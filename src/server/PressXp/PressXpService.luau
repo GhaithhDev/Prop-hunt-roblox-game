@@ -56,11 +56,32 @@ local function OnOptionPartTouched(part, hit)
 	DataManager.Set(player, "EquippedPressOption", optionIndex)
 end
 
+local function SetOptionUI(part: BasePart)
+	local optionIndex = tonumber(part.Name)
+	local option = optionIndex and XpPerPressConfig.Options[optionIndex]
+	if not option then return end
+
+	local billBoard = part:FindFirstChildWhichIsA("BillboardGui")
+	if not billBoard then return end
+
+	local stepAmountLabel = billBoard:FindFirstChild("StepAmount", true)
+	if stepAmountLabel and stepAmountLabel:IsA("TextLabel") then
+		stepAmountLabel.Text = "+" .. NumberFormat.Format(option.StepAmount) .. " / Step"
+	end
+
+	local winsRequiredLabel = billBoard:FindFirstChild("WinsRequired", true)
+	if winsRequiredLabel and winsRequiredLabel:IsA("TextLabel") then
+		winsRequiredLabel.Text = "Requires " .. NumberFormat.Format(option.WinsRequired) .. " Wins"
+	end
+
+end
+
 function PressXpService.Start()
 	for _, part in CollectionService:GetTagged(Tags.BaseXpOptionPart) do
 		part.Touched:Connect(function(hit)
 			OnOptionPartTouched(part, hit)
 		end)
+		SetOptionUI(part)
 	end
 end
 

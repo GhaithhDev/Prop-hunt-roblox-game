@@ -1,0 +1,3 @@
+local AutoWinsController = {}
+
+return AutoWinsController

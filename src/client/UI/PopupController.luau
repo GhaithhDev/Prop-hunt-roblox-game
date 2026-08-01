@@ -4,11 +4,14 @@ local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 
+--//Pacakges
+local Vector3Utils = require(ReplicatedStorage.Shared.Packages.Vector3Utils)
 local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 
 local LocalPlayer = Players.LocalPlayer
 
 local PopupController = {}
+PopupController.restingPositions = {}
 
 local BOUNCE_OFFSET = UDim2.new(0, 0, 0.6, 0)
 local BOUNCE_IN_TIME = 0.45
@@ -21,12 +24,10 @@ local HOVER_TIME = 0.15
 -- Workspace.Functional.OpenFrames.<Name> parts trigger Main.<Name> open on
 -- approach - default radius, overridable per-part via an optional "Radius"
 -- attribute (same attribute-driven convention as ObstaclePaths/TreadmillService).
-local DEFAULT_PROXIMITY_RADIUS = 10
-local PROXIMITY_CHECK_INTERVAL = 0.25
+local PROXIMITY_CHECK_INTERVAL = 0.1
 
 local blur: BlurEffect
 local currentOpenFrame: Frame?
-local restingPositions: { [Frame]: UDim2 } = {}
 local activeTweens: { [Frame]: { Tween } } = {}
 
 -- True only while a frame is open *because* the player walked into its
@@ -50,15 +51,15 @@ local function cancelTweens(frame: Frame)
 end
 
 function PopupController.Open(frame: Frame)
+	
 	ensureBlur()
-
 	if currentOpenFrame and currentOpenFrame ~= frame then
 		PopupController.Close(currentOpenFrame)
 	end
 
 	cancelTweens(frame)
 
-	local restingPosition = restingPositions[frame]
+	local restingPosition = PopupController.restingPositions[frame]
 	frame.Position = restingPosition - BOUNCE_OFFSET
 	frame.Visible = true
 	SoundUtils.PlayLocalSound(SoundService.SFX.PopupOpen)
@@ -87,7 +88,7 @@ function PopupController.Close(frame: Frame)
 	ensureBlur()
 	cancelTweens(frame)
 
-	local restingPosition = restingPositions[frame]
+	local restingPosition = PopupController.restingPositions[frame]
 	SoundUtils.PlayLocalSound(SoundService.SFX.PopupClose)
 
 	local bounceTween = TweenService:Create(
@@ -149,7 +150,7 @@ end
 -- wired, so PopupController.Open/.Close work when driven externally (e.g. a
 -- keybind-only panel like AdminPanel), it just has no icon to hover/click.
 local function registerPopup(frame: Frame, closeButton: GuiButton, icon: GuiButton?)
-	restingPositions[frame] = frame.Position
+	PopupController.restingPositions[frame] = frame.Position
 
 	if icon then
 		wireHover(icon)
@@ -181,7 +182,7 @@ local function startProximityTriggers(mainGui: Instance)
 	for _, part in openFramesFolder:GetChildren() do
 		if not part:IsA("BasePart") then continue end
 		local frame = mainGui:FindFirstChild(part.Name)
-		if frame and frame:IsA("Frame") and restingPositions[frame] then
+		if frame and frame:IsA("Frame") and PopupController.restingPositions[frame] then
 			table.insert(triggers, { Part = part, Frame = frame })
 		end
 	end
@@ -197,8 +198,7 @@ local function startProximityTriggers(mainGui: Instance)
 			for _, trigger in triggers do
 				local part, frame = trigger.Part, trigger.Frame
 				local wasInside = playerInsideZone[part] or false
-				local radius = part:GetAttribute("Radius") or DEFAULT_PROXIMITY_RADIUS
-				local isInside = rootPart ~= nil and (rootPart.Position - part.Position).Magnitude <= radius
+				local isInside = Vector3Utils.isInsideBox(rootPart.Position, part)
 
 				if isInside and not wasInside then
 					if not frame.Visible then
@@ -220,7 +220,9 @@ local function startProximityTriggers(mainGui: Instance)
 	end)
 end
 
-function PopupController.Start()
+function PopupController.Init()
+	
+
 	ensureBlur()
 
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -245,6 +247,8 @@ function PopupController.Start()
 	end
 
 	startProximityTriggers(mainGui)
+
+	print(PopupController)
 end
 
 return PopupController

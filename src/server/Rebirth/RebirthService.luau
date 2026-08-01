@@ -4,6 +4,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local RebirthConfig = require(ReplicatedStorage.Shared.Configs.RebirthConfig)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
+local RemoteConfig = require(ReplicatedStorage.Shared.Configs.RemoteConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
 local LevelService = require(ServerScriptService.Server.Level.LevelService)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
@@ -33,6 +34,16 @@ local function grantRebirth(player: Player, rebirthNumber: number, tier: Rebirth
 	LevelService.ResetProgress(player)
 	DataManager.Set(player, "Rebirths", rebirthNumber)
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `Rebirth #{rebirthNumber}! Now earning {tier.Multiplier}x XP!`)
+	Net:RemoteEvent(RemoteConfig.UIEffects.FlashWhiteScreen.Name):FireClient(player)
+
+	if player.Character then
+		task.defer(function()
+			local oldCharacter = player.Character
+			player.Character = nil 
+			oldCharacter:Destroy()
+			player:LoadCharacterAsync()
+		end)
+	end
 end
 
 local function performRebirth(player: Player)

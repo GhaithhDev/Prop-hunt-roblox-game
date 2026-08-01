@@ -1,7 +1,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
 local TweenService = game:GetService("TweenService")
 
+local PopupController = nil
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 
 local LocalPlayer = Players.LocalPlayer
@@ -12,6 +14,10 @@ function RebirthController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 	local mainGui = playerGui:WaitForChild("Main")
 
+	local playerScripts = LocalPlayer:WaitForChild("PlayerScripts")
+	PopupController = require(playerScripts.Client.UI.PopupController)
+
+	print(PopupController)
 	local icon = mainGui:WaitForChild("LeftIcons"):WaitForChild("LeftIconsContainer"):WaitForChild("Rebirth"):WaitForChild("Button")
 	local frame = mainGui:WaitForChild("Rebirth")
 
@@ -63,8 +69,10 @@ function RebirthController.Start()
 	levelValue:GetPropertyChangedSignal("Value"):Connect(RefreshIfVisible)
 
 	buyRebirthButton.Activated:Connect(function()
+		PopupController.Close(frame)
 		Net:Invoke("PerformRebirth")
 		RefreshStatus()
+		
 	end)
 
 	skipRebirthButton.Activated:Connect(function()

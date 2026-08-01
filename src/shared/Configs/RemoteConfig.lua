@@ -1,6 +1,7 @@
 return {
 	Wins = {
 		WinAwarded = { Name = "WinAwarded", Type = "Event" },
+		SetAutoWins = { Name = "SetAutoWins", Type = "Event" },  
 	},
 
 	Shrink = {
@@ -94,5 +95,9 @@ return {
 
 	LowGravity = {
 		SetGravity = { Name = "SetGravity", Type = "Event" }, -- (gravity: number)
+	},
+
+	UIEffects = {
+		FlashWhiteScreen = { Name = "FlashWhiteScreen", Type = "Event" },
 	},
 }

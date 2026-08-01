@@ -19,4 +19,12 @@ function Vector3Utils.setModelRightVectorMinus90(model: Model, direction: Vector
 	model:PivotTo(CFrame.new(pivot.Position) * delta * pivot.Rotation * CFrame.Angles(0, math.rad(-90), 0))
 end
 
+function Vector3Utils.isInsideBox(position: Vector3, box: BasePart): boolean
+	local halfSize = box.Size / 2
+	local localPosition = box.CFrame:PointToObjectSpace(position)
+	return math.abs(localPosition.X) <= halfSize.X
+		and math.abs(localPosition.Y) <= halfSize.Y
+		and math.abs(localPosition.Z) <= halfSize.Z
+end
+
 return Vector3Utils

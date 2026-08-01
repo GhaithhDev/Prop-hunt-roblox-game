@@ -89,6 +89,12 @@ function Manager.SetupLeaderstats(Player)
 	Rebirths.Parent = Leaderstats
 end
 
+function Manager.YieldUntilLoadedOrReleased(Player: Player)
+	while not Manager.GetData(Player) or not Player or not Player.Parent do
+		task.wait()
+	end
+end
+
 function Manager.SyncToClient(Player, Key, Value)
 	if not Player or not Player.Parent then return end
 	local PlayerData = Player:FindFirstChild("PlayerData")
