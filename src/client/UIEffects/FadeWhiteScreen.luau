@@ -17,7 +17,7 @@ local localPlayer : Player = nil
 local mainGui = nil
 local FadeWhiteScreenController = {}
 
-local function FlashWhiteScreen()
+local function FlashWhiteScreen(overrideTime: number)
     local frame = Instance.new("Frame",mainGui)
     frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     frame.Size = UDim2.new(1,0,1,0)
@@ -29,14 +29,14 @@ local function FlashWhiteScreen()
     TweenService:Create(
         frame,
         TweenInfo.new(
-            FlashScreenConfig.FlashDuration
+            overrideTime or FlashScreenConfig.FlashDuration
         ),
         {
             BackgroundTransparency = 1
         }
     ):Play()
 
-    task.delay(FlashScreenConfig.FlashDuration, function()
+    task.delay(overrideTime or FlashScreenConfig.FlashDuration, function()
         frame:Destroy()
     end)
 end

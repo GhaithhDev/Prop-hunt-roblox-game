@@ -208,7 +208,7 @@ function AutoWinsService.Start()
 		end
 	end)
 
-	local function PlayerAddedTesting(player)
+	--[[local function PlayerAddedTesting(player)
 		local trove = Trove.new()
 		trove:Add(player.CharacterAdded:Connect(function(character)
 			SetAutoWins(player, true)
@@ -218,6 +218,6 @@ function AutoWinsService.Start()
 	for _, player in ipairs(Players:GetPlayers()) do
 		PlayerAddedTesting(player)
 	end
-	Players.PlayerAdded:Connect(PlayerAddedTesting)
+	Players.PlayerAdded:Connect(PlayerAddedTesting)]]
 end
 return AutoWinsService

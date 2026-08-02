@@ -38,6 +38,7 @@ return {
 	Teleport = {
 		RequestWinsTeleport = { Name = "RequestWinsTeleport", Type = "Event" },
 		RequestRobuxTeleport = { Name = "RequestRobuxTeleport", Type = "Event" },
+		RequestTeleportToWorld = { Name = "RequestTeleportToWorld", Type = "Event" },
 	},
 
 	Inventory = {

@@ -179,13 +179,27 @@ local function startProximityTriggers(mainGui: Instance)
 	if not openFramesFolder then return end
 
 	local triggers: { { Part: BasePart, Frame: Frame } } = {}
-	for _, part in openFramesFolder:GetChildren() do
-		if not part:IsA("BasePart") then continue end
+
+	local function SetupProximityTrigger(part: BasePart)
+		
+		if not part:IsA("BasePart") then return end
 		local frame = mainGui:FindFirstChild(part.Name)
 		if frame and frame:IsA("Frame") and PopupController.restingPositions[frame] then
 			table.insert(triggers, { Part = part, Frame = frame })
 		end
 	end
+	
+	for _, part in openFramesFolder:GetChildren() do
+		SetupProximityTrigger(part)
+	end
+	openFramesFolder.ChildAdded:Connect(SetupProximityTrigger)
+	openFramesFolder.ChildRemoved:Connect(function(part)
+		for index , trigger in ipairs(triggers) do
+			if trigger.Part == part then
+				table.remove(triggers,index)
+			end
+		end
+	end)
 	if #triggers == 0 then return end
 
 	local playerInsideZone: { [BasePart]: boolean } = {}
