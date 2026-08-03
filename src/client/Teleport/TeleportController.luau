@@ -64,18 +64,44 @@ local function wireStage(frame: Frame, item: TeleportConfig.StageEntry)
 	end
 end
 
+local activeFrames: { Frame } = {}
+
+local function clearStageFrames()
+	for _, frame in activeFrames do
+		frame:Destroy()
+	end
+	table.clear(activeFrames)
+end
+
 function TeleportController.Start()
 	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 	local scrollingFrame = playerGui:WaitForChild("Main"):WaitForChild("TeleportStage"):WaitForChild("ScrollingFrame")
 	local template = scrollingFrame:WaitForChild("UIListLayout"):WaitForChild("StageTemplateFrame")
 
-	for index, item in TeleportConfig.Stages do
-		local clone = template:Clone()
-		clone.Name = `Stage{item.TeleportTo}`
-		clone.LayoutOrder = index
-		clone.Parent = scrollingFrame
-		wireStage(clone, item)
+	local function buildStageFrames(world: number)
+		clearStageFrames()
+
+		local stages = TeleportConfig.StagesByWorld[world] or TeleportConfig.StagesByWorld[1]
+		for index, item in stages do
+			local clone = template:Clone()
+			clone.Name = `Stage{item.TeleportTo}`
+			clone.LayoutOrder = index
+			clone.Parent = scrollingFrame
+			wireStage(clone, item)
+			table.insert(activeFrames, clone)
+		end
 	end
+
+	local playerData = LocalPlayer:WaitForChild("PlayerData")
+	local worldValue = playerData:WaitForChild("World")
+
+	buildStageFrames(worldValue.Value)
+
+	-- Switching worlds changes which per-world Wins price table applies to
+	-- every stage frame - rebuild the list from scratch to match.
+	worldValue:GetPropertyChangedSignal("Value"):Connect(function()
+		buildStageFrames(worldValue.Value)
+	end)
 end
 
 return TeleportController

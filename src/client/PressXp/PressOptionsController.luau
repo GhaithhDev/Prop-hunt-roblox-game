@@ -19,14 +19,24 @@ end
 
 local function UpdateColors( equippedOption)
 	local equippedName = tostring(equippedOption)
-	local bestOption = XpPerPressConfig.GetBestOptionForWins(LocalPlayer:WaitForChild("PlayerData"):WaitForChild("Wins").Value)
+	local playerData = LocalPlayer:WaitForChild("PlayerData")
+	local wins = playerData:WaitForChild("Wins").Value
+	local currentWorld = playerData:WaitForChild("World").Value
 	local options = GetOptions()
 	for _, part in options do
-		if tonumber(part.Name) > bestOption then
+		local optionIndex = tonumber(part.Name)
+		if not optionIndex then continue end
+
+		-- Each part's own World attribute picks which world's ladder it belongs to -
+		-- parts in different worlds can reuse the same 1..N names, so both the
+		-- affordability check and the equipped check must be world-scoped.
+		local partWorld = part:GetAttribute("World") or 1
+		local bestOption = XpPerPressConfig.GetBestOptionForWins(wins, partWorld)
+		if optionIndex > bestOption then
 			part.Color = UNALLOWED_COLOR
 			continue
 		end
-		part.Color = (part.Name == equippedName) and EQUIPPED_COLOR or UNEQUIPPED_COLOR
+		part.Color = (partWorld == currentWorld and part.Name == equippedName) and EQUIPPED_COLOR or UNEQUIPPED_COLOR
 	end
 end
 
@@ -41,6 +51,7 @@ function PressOptionsController.Start()
 	local playerData = LocalPlayer:WaitForChild("PlayerData")
 	local equippedValue = playerData:WaitForChild("EquippedPressOption")
 	local winsValue = playerData:WaitForChild("Wins")
+	local worldValue = playerData:WaitForChild("World")
 
 	equippedValue:GetPropertyChangedSignal("Value"):Connect(function()
 		UpdateColors( equippedValue.Value)
@@ -49,6 +60,12 @@ function PressOptionsController.Start()
 	-- Wins changing (spent or earned) can flip which options are affordable
 	-- even when it doesn't also change the equipped option itself.
 	winsValue:GetPropertyChangedSignal("Value"):Connect(function()
+		UpdateColors(equippedValue.Value)
+	end)
+
+	-- Switching worlds changes which per-world ladder every part's affordability/
+	-- equipped state resolves against.
+	worldValue:GetPropertyChangedSignal("Value"):Connect(function()
 		UpdateColors(equippedValue.Value)
 	end)
 

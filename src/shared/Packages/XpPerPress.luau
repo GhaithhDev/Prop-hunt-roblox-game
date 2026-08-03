@@ -108,7 +108,7 @@ local function getAdminXpMultiplier(): number
 end
 
 local function calculateAmount(stats: { [string]: any }): number
-	local baseAmount = XpPerPressConfig.GetStepAmount(stats.EquippedPressOption or XpPerPressConfig.DefaultOption)
+	local baseAmount = XpPerPressConfig.GetStepAmount(stats.EquippedPressOption or XpPerPressConfig.DefaultOption, stats.World)
 	local multiplier = getRebirthMultiplier(stats) * getAurasMultiplier(stats) * getTrailsMultiplier(stats) * getTreadmillMultiplier(stats) * getXpBoostMultiplier(stats) * getShrinkPassMultiplier(stats) * getServerBoostMultiplier() * getAdminXpMultiplier()
 	return math.floor(baseAmount * multiplier)
 end
@@ -122,6 +122,7 @@ function XpPerPress.GetAmountForPlayer(player: Player): number
 
 	return calculateAmount({
 		EquippedPressOption = DataManager.Get(player, "EquippedPressOption"),
+		World = DataManager.Get(player, "World"),
 		Rebirths = DataManager.Get(player, "Rebirths"),
 		EquippedTrail = DataManager.Get(player, "EquippedTrail"),
 		EquippedAura = DataManager.Get(player, "EquippedAura"),
@@ -137,6 +138,7 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 	local player = Players.LocalPlayer
 	local playerData = player and player:FindFirstChild("PlayerData")
 	local equippedValue = playerData and playerData:FindFirstChild("EquippedPressOption")
+	local worldValue = playerData and playerData:FindFirstChild("World")
 	local treadmillMultiplierValue = playerData and playerData:FindFirstChild("TreadmillMultiplier")
 	local rebirthsValue = playerData and playerData:FindFirstChild("Rebirths")
 	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
@@ -146,6 +148,7 @@ function XpPerPress.GetAmountForLocalPlayer(): number
 
 	return calculateAmount({
 		EquippedPressOption = equippedValue and equippedValue.Value,
+		World = worldValue and worldValue.Value,
 		TreadmillMultiplier = treadmillMultiplierValue and treadmillMultiplierValue.Value,
 		XpBoostRemainingSeconds = xpBoostRemainingValue and xpBoostRemainingValue.Value,
 		Rebirths = rebirthsValue and rebirthsValue.Value,

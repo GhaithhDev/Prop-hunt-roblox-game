@@ -11,14 +11,6 @@ local DataManager = require(ServerScriptService.Server.Data.Manager)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
 local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService)
 
-local TRAIL_ASSETS = ReplicatedStorage.Shared.Assets.Trails
-local AURA_ASSETS = ReplicatedStorage.Shared.Assets.Auras
-
--- Every Trail template's Folder contains children with these exact fixed
--- names (only Color/etc differ per trail) - lets cleanup find and remove
--- whichever trail is currently equipped without needing to track which one.
-local TRAIL_PART_NAMES = { "Attachment0", "Attachment1", "TrailEffect" }
-local AURA_PART_NAME = "AuraEffect"
 
 local InventoryService = {}
 
@@ -113,72 +105,25 @@ local function onRequestRobuxPurchase(player: Player, category: string, itemId: 
 	MonetizationService.PromptPurchaseById(player, productId)
 end
 
-local function applyEquippedEffects(player: Player)
+local function applyTrailSpeed(player: Player)
+	DataManager.YieldUntilLoadedOrReleased(player)
+	if not player then return end
 	local character = player.Character
 	local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
 	if not humanoidRootPart then return end
 
-	if DataManager.Get(player, "EquippedTrail") == nil then
-		-- Profile hasn't finished loading yet (this character spawned before
-		-- StartSessionAsync resolved) - skip instead of falling back to "no
-		-- trail". The next equip/unequip or respawn will call this again once
-		-- the profile is loaded, so this avoids permanently stranding
-		-- WalkSpeed at the no-trail default for the rest of the session.
-		return
-	end
-
-	for _, name in TRAIL_PART_NAMES do
-		local existing = humanoidRootPart:FindFirstChild(name)
-		if existing then existing:Destroy() end
-	end
-	local existingAura = humanoidRootPart:FindFirstChild(AURA_PART_NAME)
-	if existingAura then existingAura:Destroy() end
-
 	local equippedTrail = DataManager.Get(player, "EquippedTrail") or ""
-	if equippedTrail ~= "" then
-		local template = TRAIL_ASSETS:FindFirstChild(equippedTrail)
-		if template then
-			local clone = template:Clone()
-			for _, part in clone:GetChildren() do
-				part.Parent = humanoidRootPart
-			end
-			clone:Destroy()
-		end
-	end
 
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid.WalkSpeed = TrailsConfig.GetWalkSpeedForEquipped(equippedTrail)
-	end
-
-	local equippedAura = DataManager.Get(player, "EquippedAura") or ""
-	if equippedAura ~= "" then
-		local template = AURA_ASSETS:FindFirstChild(equippedAura)
-		if template then
-			local clone = template:Clone()
-			clone.Name = AURA_PART_NAME
-
-			-- Size/position the emitter part to the character's full bounding
-			-- box so the Box-shaped, LockedToPart particle emission (see
-			-- ReplicatedStorage.Shared.Assets.Auras) fills the whole body
-			-- instead of a single point at the HumanoidRootPart.
-			local boundingCFrame, boundingSize = character:GetBoundingBox()
-			clone.CFrame = boundingCFrame
-			clone.Size = boundingSize
-			clone.Parent = humanoidRootPart
-
-			local weld = Instance.new("WeldConstraint")
-			weld.Part0 = humanoidRootPart
-			weld.Part1 = clone
-			weld.Parent = clone
-		end
 	end
 end
 
 -- Exposed so Data/init.lua can re-apply once the profile finishes loading,
 -- in case the character spawned first (see applyEquippedEffects' own guard).
 function InventoryService.ApplyEquippedEffects(player: Player)
-	applyEquippedEffects(player)
+	applyTrailSpeed(player)
 end
 
 -- Clicking Equip on an already-equipped item unequips it instead - same
@@ -201,29 +146,15 @@ local function onEquipItem(player: Player, category: string, itemId: string)
 
 	if isCurrentlyEquipped then
 		DataManager.Set(player, equippedKey, "")
-		applyEquippedEffects(player)
+		applyTrailSpeed(player)
 		Net:RemoteEvent("Notify"):FireClient(player, "success", `Unequipped {item.Name}!`)
 	else
 		DataManager.Set(player, equippedKey, itemId)
-		applyEquippedEffects(player)
+		applyTrailSpeed(player)
 		Net:RemoteEvent("Notify"):FireClient(player, "success", `Equipped {item.Name}!`)
 	end
 end
 
-local function onCharacterAdded(player: Player, character: Model)
-	character:WaitForChild("HumanoidRootPart", 5)
-	applyEquippedEffects(player)
-end
-
-local function onPlayerAdded(player: Player)
-	player.CharacterAdded:Connect(function(character)
-		onCharacterAdded(player, character)
-	end)
-
-	if player.Character then
-		onCharacterAdded(player, player.Character)
-	end
-end
 
 function InventoryService.Start()
 	Net:Handle("GetInventoryStatus", getStatus)
@@ -231,10 +162,7 @@ function InventoryService.Start()
 	Net:Connect("RequestRobuxPurchase", onRequestRobuxPurchase)
 	Net:Handle("EquipItem", onEquipItem)
 
-	for _, player in Players:GetPlayers() do
-		onPlayerAdded(player)
-	end
-	Players.PlayerAdded:Connect(onPlayerAdded)
+	
 end
 
 return InventoryService

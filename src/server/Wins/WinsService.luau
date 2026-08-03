@@ -26,10 +26,10 @@ local debounce = {}
 -- per-stage IDs), so ProcessReceipt alone can't tell which stage a given
 -- purchase was for - remember it per-player between the prompt and the
 -- purchase confirming (same convention as TeleportService.pendingRevive).
-local pendingX2Win: { [Player]: number } = {}
+local pendingX2Win: { [Player]: { stage: number, world: number? } } = {}
 
 local function InitWinPart(part)
-	local stage = WinsConfig.GetWinsForStage(part:GetAttribute("Stage"))
+	local stage = WinsConfig.GetWinsForStage(part:GetAttribute("Stage"), part:GetAttribute("World"))
 	if not stage then
 		warn("Stage attribute is not set for ", part)
 		return
@@ -48,10 +48,10 @@ end
 
 -- Shared by both the immediate-grant path and the x2Win purchase-confirmed
 -- path so they always apply the same multiplier stack.
-local function grantStageWins(player: Player, stage: number, extraMultiplier: number?)
-	local winsAmount = WinsConfig.GetWinsForStage(stage)
+local function grantStageWins(player: Player, stage: number, world: number?, extraMultiplier: number?)
+	local winsAmount = WinsConfig.GetWinsForStage(stage, world)
 	if not winsAmount then
-		warn("WinsService: no WinsConfig entry for stage " .. tostring(stage))
+		warn("WinsService: no WinsConfig entry for stage " .. tostring(stage) .. " world " .. tostring(world))
 		return
 	end
 
@@ -74,7 +74,14 @@ local function grantStageWins(player: Player, stage: number, extraMultiplier: nu
 	-- the client owns physics simulation of its own network-owned character, so
 	-- pivoting it here on the server fights that simulation instead of just
 	-- moving it.
-	Net:RemoteEvent("WinAwarded"):FireClient(player)
+	--Net:RemoteEvent("WinAwarded"):FireClient(player)
+	local oldCharacter
+	oldCharacter = player.Character
+	player.Character = nil 
+	if oldCharacter then 
+		oldCharacter:Destroy()
+	end
+	player:LoadCharacterAsync()
 end
 
 local function OnWinHitboxTouched(part, hit)
@@ -89,6 +96,7 @@ local function OnWinHitboxTouched(part, hit)
 	end)
 
 	local stage = part:GetAttribute("Stage")
+	local world = part:GetAttribute("World")
 
 	if part:GetAttribute("RequireRobux") then
 		local x2WinProductId = MonetizationConfig.DevProducts.x2Win
@@ -104,12 +112,12 @@ local function OnWinHitboxTouched(part, hit)
 			return
 		end
 
-		pendingX2Win[player] = stage
+		pendingX2Win[player] = { stage = stage, world = world }
 		MonetizationService.PromptPurchaseById(player, x2WinProductId)
 		return
 	end
 
-	grantStageWins(player, stage)
+	grantStageWins(player, stage, world)
 end
 
 function WinsService.Start()
@@ -123,15 +131,15 @@ function WinsService.Start()
 	local x2WinProductId = MonetizationConfig.DevProducts.x2Win
 	if x2WinProductId and x2WinProductId ~= 0 then
 		MonetizationService.RegisterConsumable(x2WinProductId, function(player: Player)
-			local stage = pendingX2Win[player]
+			local pending = pendingX2Win[player]
 			pendingX2Win[player] = nil
 
-			if not stage then
+			if not pending then
 				warn(`WinsService: x2Win purchase confirmed for {player.Name} but no pendingX2Win - skipping grant`)
 				return
 			end
 
-			grantStageWins(player, stage, 2)
+			grantStageWins(player, pending.stage, pending.world, 2)
 		end)
 	end
 

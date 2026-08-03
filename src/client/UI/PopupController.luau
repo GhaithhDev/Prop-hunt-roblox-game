@@ -206,9 +206,10 @@ local function startProximityTriggers(mainGui: Instance)
 
 	task.spawn(function()
 		while true do
+			task.wait(PROXIMITY_CHECK_INTERVAL)
 			local character = LocalPlayer.Character
 			local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-
+			if not rootPart then continue end
 			for _, trigger in triggers do
 				local part, frame = trigger.Part, trigger.Frame
 				local wasInside = playerInsideZone[part] or false
@@ -228,8 +229,6 @@ local function startProximityTriggers(mainGui: Instance)
 
 				playerInsideZone[part] = isInside
 			end
-
-			task.wait(PROXIMITY_CHECK_INTERVAL)
 		end
 	end)
 end

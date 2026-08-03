@@ -20,7 +20,8 @@ local touchDebounce = {}
 -- equipped option stays in sync with the highest tier they can currently afford.
 function PressXpService.RecheckEquippedOption(player: Player)
 	local wins = DataManager.Get(player, "Wins") or 0
-	local bestOption = XpPerPressConfig.GetBestOptionForWins(wins)
+	local world = DataManager.Get(player, "World")
+	local bestOption = XpPerPressConfig.GetBestOptionForWins(wins, world)
 	local currentOption = DataManager.Get(player, "EquippedPressOption")
 
 	if currentOption ~= bestOption then
@@ -40,7 +41,8 @@ local function OnOptionPartTouched(part, hit)
 	end)
 
 	local optionIndex = tonumber(part.Name)
-	local option = optionIndex and XpPerPressConfig.Options[optionIndex]
+	local world = part:GetAttribute("World")
+	local option = optionIndex and XpPerPressConfig.GetOption(optionIndex, world)
 	if not option then return end
 
 	local wins = DataManager.Get(player, "Wins") or 0
@@ -58,7 +60,8 @@ end
 
 local function SetOptionUI(part: BasePart)
 	local optionIndex = tonumber(part.Name)
-	local option = optionIndex and XpPerPressConfig.Options[optionIndex]
+	local world = part:GetAttribute("World")
+	local option = optionIndex and XpPerPressConfig.GetOption(optionIndex, world)
 	if not option then return end
 
 	local billBoard = part:FindFirstChildWhichIsA("BillboardGui")

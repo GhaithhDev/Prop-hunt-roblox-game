@@ -8,14 +8,6 @@ local Net = require(ReplicatedStorage.Shared.Packages.Net)
 
 local ShrinkService = {}
 
--- Session-only: a manually-set custom size survives respawns but not level-ups
--- or rejoins, so it's kept here rather than in the saved profile. Replicated
--- to the owning client via the "CustomScale" attribute on the Player - the
--- client (which owns its own character's physics) is what actually calls
--- character:ScaleTo now, not the server; doing it server-side left the
--- character's movement drifty/floaty instead of stopping instantly on key
--- release, since it fought the client's own physics simulation of its
--- network-owned character.
 local customSizes = {}
 
 local function syncCustomScale(player: Player)

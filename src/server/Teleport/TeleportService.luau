@@ -21,28 +21,19 @@ local TeleportService = {}
 -- purchase confirming.
 local pendingRevive: { [Player]: number } = {}
 
--- TeleportConfig is the single source of truth for Wins pricing (shared with
--- TeleportController, which generates the stage frames from the same config)
--- - no need to cache it into a separate lookup table, just search it directly.
-local function getStageConfig(stageNumber: number): TeleportConfig.StageEntry?
-	for _, item in TeleportConfig.Stages do
-		if item.TeleportTo == stageNumber then
-			return item
-		end
-	end
-	return nil
-end
-
-local function teleportPlayerToStage(player: Player, stageNumber: number)
+local function teleportPlayerToStage(player: Player, stageNumber: number, world: number?)
 	local character = player.Character
 	if not character then
 		warn(`TeleportService: {player.Name} has no character to teleport`)
 		return
 	end
 
-	local part = workspace.Functional.TeleportStages:FindFirstChild(tostring(stageNumber))
+	local worldNum = (world and tonumber(world)) or 1
+	local worldFolder = workspace.Functional.TeleportStages:FindFirstChild("World" .. worldNum)
+		or workspace.Functional.TeleportStages:FindFirstChild("World1")
+	local part = worldFolder and worldFolder:FindFirstChild(tostring(stageNumber))
 	if not part then
-		warn(`TeleportService: no TeleportStages part found for stage {stageNumber}`)
+		warn(`TeleportService: no TeleportStages part found for stage {stageNumber} in world {worldNum}`)
 		return
 	end
 
@@ -51,7 +42,8 @@ end
 
 local function onRequestWinsTeleport(player: Player, stageNumber: number)
 	stageNumber = tonumber(stageNumber) :: number
-	local stage = stageNumber and getStageConfig(stageNumber)
+	local world = DataManager.Get(player, "World") or 1
+	local stage = stageNumber and TeleportConfig.GetStageConfig(stageNumber, world)
 	if not stage then
 		Net:RemoteEvent("Notify"):FireClient(player, "error", `Stage {stageNumber} isn't available.`)
 		return
@@ -65,13 +57,13 @@ local function onRequestWinsTeleport(player: Player, stageNumber: number)
 
 	DataManager.Add(player, WINS_KEY, -stage.WinsCost)
 	PressXpService.RecheckEquippedOption(player)
-	teleportPlayerToStage(player, stageNumber)
+	teleportPlayerToStage(player, stageNumber, world)
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `Teleported to Stage {stageNumber}!`)
 end
 
 local function onRequestRobuxTeleport(player: Player, stageNumber: number)
 	stageNumber = tonumber(stageNumber) :: number
-	local stage = stageNumber and getStageConfig(stageNumber)
+	local stage = stageNumber and TeleportConfig.GetStageConfig(stageNumber, DataManager.Get(player, "World"))
 	if not stage then
 		Net:RemoteEvent("Notify"):FireClient(player, "error", `Stage {stageNumber} isn't available.`)
 		return
@@ -113,7 +105,8 @@ local function onRevivePurchased(player: Player)
 		return
 	end
 
-	teleportPlayerToStage(player, stageNumber)
+	local world = DataManager.Get(player, "World") or 1
+	teleportPlayerToStage(player, stageNumber, world)
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `Revived at Stage {stageNumber}!`)
 end
 
@@ -124,7 +117,8 @@ function TeleportService.Start()
 		local stageNumber = tonumber(stageKey)
 		if stageNumber and productId ~= 0 then
 			MonetizationService.RegisterConsumable(productId, function(player: Player)
-				teleportPlayerToStage(player, stageNumber)
+				local world = DataManager.Get(player, "World") or 1
+				teleportPlayerToStage(player, stageNumber, world)
 				Net:RemoteEvent("Notify"):FireClient(player, "success", `Teleported to Stage {stageNumber}!`)
 			end)
 		end

@@ -5,6 +5,15 @@ local ShrinkConfig = require(ReplicatedStorage.Shared.Configs.ShrinkConfig)
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 
 local TRAIL_ASSETS = ReplicatedStorage.Shared.Assets.Trails
+local AURA_ASSETS = ReplicatedStorage.Shared.Assets.Auras
+
+-- Every Trail template's Folder contains children with these exact fixed
+-- names (only Color/etc differ per trail) - lets cleanup find and remove
+-- whichever trail is currently equipped without needing to track which one.
+local TRAIL_PART_NAMES = { "Attachment0", "Attachment1", "TrailEffect" }
+local AURA_PART_NAME = "AuraEffect"
+
+local failedToApplyScalePlayers = {}
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -14,46 +23,58 @@ local function GetMinScale(levelValue)
 	return ShrinkConfig.GetScaleForLevel(levelValue.Value)
 end
 
--- Every client runs this identically for every player (not just LocalPlayer),
--- driven only by that player's own replicated PlayerData.Level and CustomScale
--- attribute - so everyone converges on the same scale for the same player
--- independently, without the server ever calling ScaleTo itself.
-local function rescaleTrail(player: Player, character: Model, scale: number)
-	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+local function applyEquippedEffects(player: Player)
+	local character = player.Character
+	local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
 	if not humanoidRootPart then return end
 
-	local attachment0 = humanoidRootPart:FindFirstChild("Attachment0")
-	local attachment1 = humanoidRootPart:FindFirstChild("Attachment1")
-	local trailEffect = humanoidRootPart:FindFirstChild("TrailEffect")
-	if not (attachment0 and attachment1 and trailEffect) then return end
+	local playerData = player:WaitForChild("PlayerData")
 
-	local playerData = player:FindFirstChild("PlayerData")
-	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
-	local equippedTrail = equippedTrailValue and equippedTrailValue.Value
-	if not equippedTrail or equippedTrail == "" then return end
+	for _, name in TRAIL_PART_NAMES do
+		local existing = humanoidRootPart:FindFirstChild(name)
+		if existing then existing:Destroy() end
+	end
+	local existingAura = humanoidRootPart:FindFirstChild(AURA_PART_NAME)
+	if existingAura then existingAura:Destroy() end
 
-	-- The template is never mutated (only :Clone()'d by InventoryService), so
-	-- it's always safe to read as the "scale 1.0" baseline, however many times
-	-- this rescale runs later.
-	local template = TRAIL_ASSETS:FindFirstChild(equippedTrail)
-	if not template then return end
+	
+	local equippedTrail = playerData:WaitForChild("EquippedTrail").Value
+	if equippedTrail ~= "" then
+		local template = TRAIL_ASSETS:FindFirstChild(equippedTrail)
+		if template then
+			local clone = template:Clone()
+			for _, part in clone:GetChildren() do
+				part.Parent = humanoidRootPart
+			end
+			clone:Destroy()
+		end
+	end
 
-	local baseAttachment0 = template:FindFirstChild("Attachment0")
-	local baseAttachment1 = template:FindFirstChild("Attachment1")
-	local baseTrailEffect = template:FindFirstChild("TrailEffect")
-	if not (baseAttachment0 and baseAttachment1 and baseTrailEffect) then return end
+	local equippedAura = playerData:WaitForChild("EquippedAura").Value
+	if equippedAura ~= "" then
+		local template = AURA_ASSETS:FindFirstChild(equippedAura)
+		if template then
+			local clone = template:Clone()
+			clone.Name = AURA_PART_NAME
 
-	attachment0.Position = baseAttachment0.Position * scale
-	attachment1.Position = baseAttachment1.Position * scale
-	trailEffect.Lifetime = baseTrailEffect.Lifetime * scale
-	trailEffect.MinLength = baseTrailEffect.MinLength * scale
-	trailEffect.MaxLength = baseTrailEffect.MaxLength * scale
+			local boundingCFrame, boundingSize = character:GetBoundingBox()
+			clone.CFrame = boundingCFrame
+			clone.Size = boundingSize
+			clone.Parent = humanoidRootPart
+
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = humanoidRootPart
+			weld.Part1 = clone
+			weld.Parent = clone
+		end
+	end
 end
 
-local function applyScaleAndTrail(player: Player, character: Model, level: number, customScale: number?)
+local function applyScaleAndEffects(player: Player, character: Model, level: number, customScale: number?)
+	
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
-
+	
 	local scale = ShrinkConfig.GetEffectiveScale(level, customScale)
 
 	-- ScaleTo re-derives WalkSpeed/JumpPower/JumpHeight from the model's new
@@ -68,19 +89,28 @@ local function applyScaleAndTrail(player: Player, character: Model, level: numbe
 	humanoid.JumpHeight = jumpHeight
 	character:SetAttribute("CurrentScale", scale)
 
-	rescaleTrail(player, character, scale)
+	applyEquippedEffects(player)
 end
 
 local function setupPlayerScaling(player: Player)
-	local playerData = player:WaitForChild("PlayerData")
-	local levelValue = playerData:WaitForChild("Level")
+	local playerData = player:FindFirstChild("PlayerData")
+	local levelValue = playerData and playerData:FindFirstChild("Level")
 	local equippedTrailValue = playerData:WaitForChild("EquippedTrail")
+	if not playerData then
+		warn(`Player {player.Name} doesn't have data yet, won't apply scale and effects yet`)
+		failedToApplyScalePlayers[player] = true
+		return 
+	end
+	failedToApplyScalePlayers[player] = nil
+
+	
+	
 
 	local function refresh()
 		local character = player.Character
 		if character then
 			local customScale = player:GetAttribute("CustomScale") :: number?
-			applyScaleAndTrail(player, character, levelValue.Value, customScale)
+			applyScaleAndEffects(player, character, levelValue.Value, customScale)
 		end
 	end
 
@@ -103,6 +133,15 @@ local function HookCurrentScaleDisplay(character, currentScaleLabel, scaleInput)
 
 	character:GetAttributeChangedSignal("CurrentScale"):Connect(UpdateCurrentScaleLabel)
 	UpdateCurrentScaleLabel()
+end
+
+local function LookForUnHookedPlayers()
+	task.wait(1)
+	for player , isUnHooked in pairs(failedToApplyScalePlayers) do
+		if not isUnHooked then return end 
+		warn(`Hooking scale / trails connection for playe: {player.Name} whoose his data wasn't loaded yet`)
+		setupPlayerScaling(player)
+	end
 end
 
 function ShrinkController.Start()
@@ -155,6 +194,9 @@ function ShrinkController.Start()
 
 		Net:RemoteEvent("SetCustomSize"):FireServer(desiredScale)
 	end)
+
+	task.spawn(LookForUnHookedPlayers)
+
 end
 
 return ShrinkController

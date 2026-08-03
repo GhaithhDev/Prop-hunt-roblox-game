@@ -42,6 +42,8 @@ local function RefreshTeleportWorldFrame(currentWorld)
 	end
 end
 
+
+
 function TeleportWorldsController.Start(Controllers)
 	localPlayer = Players.LocalPlayer
 	WorldTeleportFrame = localPlayer:WaitForChild("PlayerGui"):WaitForChild("Main"):WaitForChild("WorldTeleport")
