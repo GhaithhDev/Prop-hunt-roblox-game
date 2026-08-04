@@ -19,6 +19,14 @@ local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local AdminConfig = require(ReplicatedStorage.Shared.Configs.AdminConfig)
 local TreadmillService = require(ServerScriptService.Server.Treadmill.TreadmillService)
 
+-- Set from the Services table passed into .Start(), not a top-level require -
+-- WinsService already requires AdminService, and UFOEventService requires
+-- WinsService, so a top-level require here would form a require cycle
+-- (AdminService -> UFOEventService -> WinsService -> AdminService) and hand
+-- one of the three an incomplete module table. Every service's .Start(services)
+-- runs only after all services have finished loading, so this is safe.
+local UFOEventService
+
 local TOPIC = "AdminAction"
 local SYNC_INTERVAL = 1
 
@@ -50,7 +58,7 @@ local function handleAction(action: string, data: { [string]: any })
 	if action == "SetXpMultiplier" then
 		xpMultiplier = data.Multiplier
 		xpExpiresAt = os.time() + data.Duration
-		Net:RemoteEvent("Notify"):FireAllClients("success", `An admin activated a {data.Multiplier}x Shrink boost for {data.Duration} seconds!`)
+		Net:RemoteEvent("Notify"):FireAllClients("success", `An admin activated a {data.Multiplier}x Speed boost for {data.Duration} seconds!`)
 	elseif action == "SetWinsMultiplier" then
 		winsMultiplier = data.Multiplier
 		winsExpiresAt = os.time() + data.Duration
@@ -58,6 +66,9 @@ local function handleAction(action: string, data: { [string]: any })
 	elseif action == "SpawnEventTreadmill" then
 		TreadmillService.SpawnEventTreadmill(data.Name, data.Duration)
 		Net:RemoteEvent("Notify"):FireAllClients("success", `An admin spawned a {data.Name} event treadmill for {data.Duration} seconds!`)
+	elseif action == "StartUFOEvent" then
+		UFOEventService.StartEvent(data.Duration)
+		Net:RemoteEvent("Notify"):FireAllClients("success", `An admin started the UFO event for {data.Duration} seconds!`)
 	elseif action == "Announce" then
 		Net:RemoteEvent("AdminAnnouncement"):FireAllClients(data.PlayerName, data.PlayerUserId, data.Message)
 	end
@@ -99,6 +110,13 @@ local function onAdminAction(player: Player, action: string, arg1: any, arg2: an
 			return
 		end
 		data = { Name = name, Duration = duration }
+	elseif action == "StartUFOEvent" then
+		local duration = tonumber(arg1)
+		if not duration then
+			Net:RemoteEvent("Notify"):FireClient(player, "error", "Enter a valid duration.")
+			return
+		end
+		data = { Duration = duration }
 	elseif action == "Announce" then
 		local message = arg1
 		if not message or message == "" then
@@ -115,7 +133,9 @@ local function onAdminAction(player: Player, action: string, arg1: any, arg2: an
 	broadcastToOtherServers(action, data)
 end
 
-function AdminService.Start()
+function AdminService.Start(services)
+	UFOEventService = services.UFOEventService
+
 	Net:Connect("AdminAction", onAdminAction)
 
 	local ok, err = pcall(function()

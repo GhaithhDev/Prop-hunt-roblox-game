@@ -28,7 +28,8 @@ local function OnSetCustomSize(player: Player, desiredScale)
 	end
 
 	local level = DataManager.Get(player, "Level") or 1
-	local minScale = ShrinkConfig.GetScaleForLevel(level)
+	local world = DataManager.Get(player, "World") or 1
+	local minScale = ShrinkConfig.GetScaleForLevel(level, world)
 
 	if desiredScale < minScale or desiredScale > ShrinkConfig.BaseScale then
 		warn(`ShrinkService: {player.Name} requested {desiredScale}, outside allowed range {minScale}-{ShrinkConfig.BaseScale}`)

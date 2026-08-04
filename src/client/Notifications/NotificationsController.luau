@@ -109,8 +109,12 @@ function NotificationsController.NotifyLevelUp(oldLevel: number, newLevel: numbe
 	local levelLabel = clone:WaitForChild("LevelLabel")
 	local shrinkLabel = clone:WaitForChild("ShrinkLabel")
 
+	local world = LocalPlayer:WaitForChild("PlayerData"):WaitForChild("World").Value
+	local oldShrinkScore = ShrinkConfig.GetShrinkScoreForLevel(oldLevel, world)
+	local newShrinkScore = ShrinkConfig.GetShrinkScoreForLevel(newLevel, world)
+
 	levelLabel.Text = `Level {oldLevel} => Level {newLevel}`
-	shrinkLabel.Text = `Shrink {ShrinkConfig.GetShrinkScoreForLevel(oldLevel)} => Shrink {ShrinkConfig.GetShrinkScoreForLevel(newLevel)}`
+	shrinkLabel.Text = `Shrink {oldShrinkScore} => Shrink {newShrinkScore}`
 
 	local fadeTargets = buildFadeTargets(clone)
 	hideFadeTargets(fadeTargets)

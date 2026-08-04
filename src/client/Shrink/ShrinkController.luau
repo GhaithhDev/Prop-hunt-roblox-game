@@ -14,30 +14,28 @@ local TRAIL_PART_NAMES = { "Attachment0", "Attachment1", "TrailEffect" }
 local AURA_PART_NAME = "AuraEffect"
 
 local failedToApplyScalePlayers = {}
-
-local LocalPlayer = Players.LocalPlayer
+local madeDataConnections = {}
 
 local ShrinkController = {}
 
-local function GetMinScale(levelValue)
-	return ShrinkConfig.GetScaleForLevel(levelValue.Value)
-end
 
-local function applyEquippedEffects(player: Player)
+local function applyEquippedEffects(player: Player, boundingCFrame: CFrame, boundingSize: Vector3)
 	local character = player.Character
 	local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-	if not humanoidRootPart then return end
 
 	local playerData = player:WaitForChild("PlayerData")
 
 	for _, name in TRAIL_PART_NAMES do
 		local existing = humanoidRootPart:FindFirstChild(name)
-		if existing then existing:Destroy() end
+		if existing then
+			existing:Destroy()
+		end
 	end
 	local existingAura = humanoidRootPart:FindFirstChild(AURA_PART_NAME)
-	if existingAura then existingAura:Destroy() end
+	if existingAura then
+		existingAura:Destroy()
+	end
 
-	
 	local equippedTrail = playerData:WaitForChild("EquippedTrail").Value
 	if equippedTrail ~= "" then
 		local template = TRAIL_ASSETS:FindFirstChild(equippedTrail)
@@ -45,6 +43,13 @@ local function applyEquippedEffects(player: Player)
 			local clone = template:Clone()
 			for _, part in clone:GetChildren() do
 				part.Parent = humanoidRootPart
+				if part:IsA("Trail") then
+					part.FaceCamera = true
+				elseif part.Name == "Attachment0" then
+					part.Position = Vector3.new(0, boundingSize.X / 4, 0)
+				elseif part.Name == "Attachment1" then
+					part.Position = Vector3.new(0, -boundingSize.X / 4, 0)
+				end
 			end
 			clone:Destroy()
 		end
@@ -57,9 +62,8 @@ local function applyEquippedEffects(player: Player)
 			local clone = template:Clone()
 			clone.Name = AURA_PART_NAME
 
-			local boundingCFrame, boundingSize = character:GetBoundingBox()
 			clone.CFrame = boundingCFrame
-			clone.Size = boundingSize
+			clone.Size = boundingSize / 1.5
 			clone.Parent = humanoidRootPart
 
 			local weld = Instance.new("WeldConstraint")
@@ -70,16 +74,20 @@ local function applyEquippedEffects(player: Player)
 	end
 end
 
-local function applyScaleAndEffects(player: Player, character: Model, level: number, customScale: number?)
-	
+local function applyScaleAndEffects(player: Player, character: Model, level: number, customScale: number?, world: number?)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
-	
-	local scale = ShrinkConfig.GetEffectiveScale(level, customScale)
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
 
-	-- ScaleTo re-derives WalkSpeed/JumpPower/JumpHeight from the model's new
-	-- size as a side effect, clobbering whatever Trail-based speed the server
-	-- applied - save and restore them around the call.
+	local scale = ShrinkConfig.GetEffectiveScale(level, customScale, world)
+	local previousScale = (character:GetAttribute("CurrentScale") :: number?) or ShrinkConfig.BaseScale
+
+	
+	local ratio = scale / previousScale
+	local boundingCFrame, boundingSize = character:GetBoundingBox()
+	local localOffset = rootPart.CFrame:ToObjectSpace(boundingCFrame)
+	local predictedBoundingCFrame = rootPart.CFrame * CFrame.new(localOffset.Position * ratio)
+	local predictedBoundingSize = boundingSize * ratio
+
 	local walkSpeed = humanoid.WalkSpeed
 	local jumpPower = humanoid.JumpPower
 	local jumpHeight = humanoid.JumpHeight
@@ -89,114 +97,96 @@ local function applyScaleAndEffects(player: Player, character: Model, level: num
 	humanoid.JumpHeight = jumpHeight
 	character:SetAttribute("CurrentScale", scale)
 
-	applyEquippedEffects(player)
+	applyEquippedEffects(player, predictedBoundingCFrame, predictedBoundingSize)
 end
 
-local function setupPlayerScaling(player: Player)
+local function OnCharacterAdded(player: Player)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChild("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
 	local playerData = player:FindFirstChild("PlayerData")
 	local levelValue = playerData and playerData:FindFirstChild("Level")
-	local equippedTrailValue = playerData:WaitForChild("EquippedTrail")
-	if not playerData then
-		warn(`Player {player.Name} doesn't have data yet, won't apply scale and effects yet`)
-		failedToApplyScalePlayers[player] = true
-		return 
-	end
-	failedToApplyScalePlayers[player] = nil
+	local equippedTrailValue = playerData and playerData:FindFirstChild("EquippedTrail")
+	local equippedAuraValue = playerData and playerData:FindFirstChild("EquippedAura")
+	local worldValue = playerData and playerData:FindFirstChild("World")
 
-	
-	
+	local isDataReady = playerData and levelValue and equippedTrailValue and equippedAuraValue and worldValue
+	local isCharacterReady = humanoid and root
+
+	if not isDataReady or not isCharacterReady then
+		warn(
+			`Player {player.Name} doesn't have data or his character isn't loaded yet, won't apply scale and effects yet`
+		)
+		failedToApplyScalePlayers[player] = true
+		return
+	end
 
 	local function refresh()
-		local character = player.Character
-		if character then
-			local customScale = player:GetAttribute("CustomScale") :: number?
-			applyScaleAndEffects(player, character, levelValue.Value, customScale)
-		end
+		local customScale = player:GetAttribute("CustomScale") :: number?
+		applyScaleAndEffects(player, character, levelValue.Value, customScale, worldValue.Value)
+		print("applied scale and effects for " .. player.Name)
 	end
 
-	levelValue:GetPropertyChangedSignal("Value"):Connect(refresh)
-	equippedTrailValue:GetPropertyChangedSignal("Value"):Connect(refresh)
-	player:GetAttributeChangedSignal("CustomScale"):Connect(refresh)
-	player.CharacterAdded:Connect(refresh)
+	local function MakeDataConnections(levelValue, equippedTrailValue, equippedAuraValue, worldValue)
+		levelValue:GetPropertyChangedSignal("Value"):Connect(function()
+			OnCharacterAdded(player)
+		end)
+		equippedTrailValue:GetPropertyChangedSignal("Value"):Connect(function()
+			OnCharacterAdded(player)
+		end)
+		equippedAuraValue:GetPropertyChangedSignal("Value"):Connect(function()
+			OnCharacterAdded(player)
+		end)
+		worldValue:GetPropertyChangedSignal("Value"):Connect(function()
+			OnCharacterAdded(player)
+		end)
 
-	if player.Character then
-		refresh()
+		player:GetAttributeChangedSignal("CustomScale"):Connect(function()
+			OnCharacterAdded(player)
+		end)
+
+		madeDataConnections[player] = true
+		print("Made data connections for " .. player.Name)
 	end
-end
 
-local function HookCurrentScaleDisplay(character, currentScaleLabel, scaleInput)
-	local function UpdateCurrentScaleLabel()
-		local scale = character:GetAttribute("CurrentScale") or ShrinkConfig.BaseScale
-		currentScaleLabel.Text = "current scale: " .. scale
-		scaleInput.PlaceholderText = tostring(scale)
+	if not madeDataConnections[player] then
+		MakeDataConnections(levelValue, equippedTrailValue, equippedAuraValue, worldValue)
 	end
 
-	character:GetAttributeChangedSignal("CurrentScale"):Connect(UpdateCurrentScaleLabel)
-	UpdateCurrentScaleLabel()
+	refresh()
 end
 
 local function LookForUnHookedPlayers()
-	task.wait(1)
-	for player , isUnHooked in pairs(failedToApplyScalePlayers) do
-		if not isUnHooked then return end 
-		warn(`Hooking scale / trails connection for playe: {player.Name} whoose his data wasn't loaded yet`)
-		setupPlayerScaling(player)
+	while task.wait(1) do
+		for player, isUnHooked in pairs(failedToApplyScalePlayers) do
+			if not isUnHooked then
+				return
+			end
+			warn(
+				`Hooking scale / trails connection for playe: {player.Name} whoose data or his character wasn't loaded at character add time`
+			)
+			failedToApplyScalePlayers[player] = nil
+			OnCharacterAdded(player)
+		end
 	end
 end
 
+local function OnPlayerAdded(player: Player)
+	if player.Character then
+		OnCharacterAdded(player)
+	end
+	player.CharacterAdded:Connect(function(character: Model)
+		OnCharacterAdded(player)
+	end)
+end
+
 function ShrinkController.Start()
-	-- Scale + Trail sizing for every player (LocalPlayer included, same code
-	-- path, no special-casing).
 	for _, player in Players:GetPlayers() do
-		setupPlayerScaling(player)
+		OnPlayerAdded(player)
 	end
-	Players.PlayerAdded:Connect(setupPlayerScaling)
-
-	-- ShrinkSettings manual-resize panel - inherently LocalPlayer-only UI.
-	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local shrinkSettings = playerGui:WaitForChild("Main"):WaitForChild("RightIcons")
-	:WaitForChild("ShrinkSettings")
-	local minScaleLabel = shrinkSettings:WaitForChild("MinScaleLabel")
-	local scaleInput = shrinkSettings:WaitForChild("ScaleInput")
-	local currentScaleLabel = shrinkSettings:WaitForChild("CurrentScale")
-	local applyButton = shrinkSettings:WaitForChild("Apply")
-
-	local playerData = LocalPlayer:WaitForChild("PlayerData")
-	local levelValue = playerData:WaitForChild("Level")
-
-	local function UpdateMinScaleLabel()
-		minScaleLabel.Text = "Min Scale: " .. GetMinScale(levelValue)
-	end
-
-	levelValue:GetPropertyChangedSignal("Value"):Connect(UpdateMinScaleLabel)
-	UpdateMinScaleLabel()
-
-	LocalPlayer.CharacterAdded:Connect(function(character)
-		HookCurrentScaleDisplay(character, currentScaleLabel, scaleInput)
-	end)
-	if LocalPlayer.Character then
-		HookCurrentScaleDisplay(LocalPlayer.Character, currentScaleLabel, scaleInput)
-	end
-
-	applyButton.Activated:Connect(function()
-		local desiredScale = tonumber(scaleInput.Text)
-		local minScale = GetMinScale(levelValue)
-
-		if not desiredScale or desiredScale ~= desiredScale then
-			warn(`ShrinkController: "{scaleInput.Text}" is not a valid number`)
-			return
-		end
-
-		if desiredScale < minScale or desiredScale > ShrinkConfig.BaseScale then
-			warn(`ShrinkController: {desiredScale} is outside the allowed range {minScale}-{ShrinkConfig.BaseScale}`)
-			return
-		end
-
-		Net:RemoteEvent("SetCustomSize"):FireServer(desiredScale)
-	end)
+	Players.PlayerAdded:Connect(OnPlayerAdded)
 
 	task.spawn(LookForUnHookedPlayers)
-
 end
 
 return ShrinkController

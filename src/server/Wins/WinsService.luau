@@ -12,15 +12,40 @@ local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService
 local WinsMultiplierService = require(ServerScriptService.Server.WinsMultiplier.WinsMultiplierService)
 local AdminService = require(ServerScriptService.Server.Admin.AdminService)
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
+local MonetizationUtils = require(ReplicatedStorage.Shared.Utils.MonetizationUtils)
 local MonetizationService = require(ServerScriptService.Server.Monetization.MonetizationService)
 
 local DEBOUNCE_TIME = 1
 
 local WIN_PART_BILLBOARD_TEMPLATE = ReplicatedStorage.Shared.Assets.Billbaords.WinPart
+local ROBUX_WIN_BILLBOARD_TEMPLATE = ReplicatedStorage.Shared.Assets.Billbaords.RobuxWins
+
+
+local SPAWN_UP_OFFSET = Vector3.new(0, 5, 0) -- lift off the spawn pad so the character doesn't land clipped into it
 
 local WinsService = {}
 
 local debounce = {}
+
+-- World1's spawn stays at the original unprefixed path; World2/3 live under
+-- their own top-level world root folders, same convention as AutoWinsStart/
+-- Decorations.Stages (see AutoWinsService.GetAutoWinsStartPart/GetStagesRoot).
+local function GetSpawnPosition(world: number?): Vector3?
+	local worldNum = (world and tonumber(world)) or 1
+	local functionalRoot = workspace.Functional
+	if worldNum ~= 1 then
+		local worldRoot = workspace:FindFirstChild("World" .. worldNum)
+		functionalRoot = (worldRoot and worldRoot:FindFirstChild("Functional")) or workspace.Functional
+	end
+
+	local spawnLocation = functionalRoot:FindFirstChild("SpawnLocation")
+	if not spawnLocation then
+		warn("WinsService: no SpawnLocation found for world " .. tostring(worldNum))
+		return nil
+	end
+
+	return spawnLocation.Position + SPAWN_UP_OFFSET
+end
 
 -- x2Win is a single shared ProductId across every stage (unlike SkipToStage's
 -- per-stage IDs), so ProcessReceipt alone can't tell which stage a given
@@ -37,13 +62,37 @@ local function InitWinPart(part)
 
 	local billboardGui = part:FindFirstChild("BillboardGui")
 	if not billboardGui then
-		billboardGui = WIN_PART_BILLBOARD_TEMPLATE:Clone()
+		billboardGui = part:GetAttribute("RequireRobux") and ROBUX_WIN_BILLBOARD_TEMPLATE:Clone()
+			or WIN_PART_BILLBOARD_TEMPLATE:Clone()
 		billboardGui.Name = "BillboardGui"
+
+		if part:GetAttribute("RequireRobux") then
+			local price = MonetizationUtils.GetProductPriceInRobux(MonetizationConfig.DevProducts.x2Win)
+			if price then
+				billboardGui.RobuxPrice.Text = NumberFormat.Format(price)
+			else
+				warn("MonetizationConfig.DevProducts.x2Wins isn't setup yet")
+			end
+		end
+
 		billboardGui.Parent = part
 	end
 
 	local displayedWins = part:GetAttribute("RequireRobux") and stage * 2 or stage
 	billboardGui.AmountofWins.Text = "+" .. NumberFormat.Format(displayedWins) .. " Wins"
+end
+
+-- Public entry point for non-stage sources of Wins (e.g. UFOEventService's
+-- abduction reward) that still want the same multiplier stack a stage win
+-- gets (WinsMultiplier gamepass, Admin Wins multiplier) - just without the
+-- stage-pad-specific spawn teleport.
+function WinsService.GrantWins(player: Player, amount: number)
+	if WinsMultiplierService.HasDoubleWins(player) then
+		amount *= 2
+	end
+	amount = math.floor(amount * AdminService.GetWinsMultiplier())
+	DataManager.Add(player, "Wins", amount)
+	PressXpService.RecheckEquippedOption(player)
 end
 
 -- Shared by both the immediate-grant path and the x2Win purchase-confirmed
@@ -70,18 +119,14 @@ local function grantStageWins(player: Player, stage: number, world: number?, ext
 	DataManager.Add(player, "Wins", winsAmount)
 	PressXpService.RecheckEquippedOption(player)
 
-	-- Teleporting back to spawn is done client-side (see WinsTeleportController) -
-	-- the client owns physics simulation of its own network-owned character, so
-	-- pivoting it here on the server fights that simulation instead of just
-	-- moving it.
-	--Net:RemoteEvent("WinAwarded"):FireClient(player)
-	local oldCharacter
-	oldCharacter = player.Character
-	player.Character = nil 
-	if oldCharacter then 
-		oldCharacter:Destroy()
+	local character = player.Character
+	if character then
+		local playerWorld = DataManager.Get(player, "World") or 1
+		local spawnPosition = GetSpawnPosition(playerWorld)
+		if spawnPosition then
+			character:PivotTo(CFrame.new(spawnPosition))
+		end
 	end
-	player:LoadCharacterAsync()
 end
 
 local function OnWinHitboxTouched(part, hit)

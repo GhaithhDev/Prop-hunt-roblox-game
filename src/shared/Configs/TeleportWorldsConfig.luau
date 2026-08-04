@@ -2,8 +2,8 @@ local TeleportWorldsConfig = {}
 
 TeleportWorldsConfig.LevelRequirement = {
     [1] = 0,
-    [2] = 10,
-    [3] = 20,
+    [2] = 400,
+    [3] = 875,
 }
 
 return TeleportWorldsConfig

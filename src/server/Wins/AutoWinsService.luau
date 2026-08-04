@@ -36,6 +36,23 @@ local function StopAutoWins(userId: number)
 	AutoWinsPlayers[userId] = nil
 end
 
+-- World1's start part stays at the original unprefixed path; World2/3 are
+-- children of the same AutoWinsStart folder, named by world number.
+local function GetAutoWinsStartPart(world: number): BasePart?
+	local startFolder = workspace.Functional.AutoWinsStart
+	return startFolder:FindFirstChild(tostring(world)) or startFolder:FindFirstChild("1")
+end
+
+-- World1 keeps using the original unprefixed Decorations.Stages path;
+-- World2/3 live under their own top-level world root folders.
+local function GetStagesRoot(world: number): Instance
+	if world == 1 then
+		return workspace.Decorations.Stages
+	end
+	local worldRoot = workspace:FindFirstChild("World" .. world)
+	return (worldRoot and worldRoot.Decorations.Stages) or workspace.Decorations.Stages
+end
+
 local function MovePlayersToTargetPart()
 	for userId, data in pairs(AutoWinsPlayers) do
 		if not data.Ready then
@@ -75,9 +92,10 @@ local function MovePlayersToTargetPart()
 				data.ReachedMid = true
 			end
 		else
+			local startPart = GetAutoWinsStartPart(data.World)
 			if
 				(rootPart.Position - data.WinPosition).Magnitude <= REACHED_DISTANCE
-				or rootPart.Position.Z > workspace.Functional.AutoWinsStart.Position.Z
+				or (startPart and rootPart.Position.Z > startPart.Position.Z)
 			then
 				print("Player " .. player.Name .. " reached win position, starting cooldown.")
 				data.ReachedMid = false
@@ -90,19 +108,25 @@ local function MovePlayersToTargetPart()
 	end
 end
 
-local function TeleportPlayerToStart(character: Model)
-	character:PivotTo(workspace.Functional.AutoWinsStart.CFrame)
+local function TeleportPlayerToStart(character: Model, world: number)
+	local startPart = GetAutoWinsStartPart(world)
+	if not startPart then
+		return
+	end
+	character:PivotTo(startPart.CFrame)
 end
 
-local function GetBestUnlockedStage(player: Player): string
+local function GetBestUnlockedStage(player: Player, world: number): string
 	DataManager.YieldUntilLoadedOrReleased(player)
 	local playerData = DataManager.GetData(player)
 	if not playerData then
 		return "1"
 	end
 
+	local requirements = StageGates.LevelRequirementsByWorld[world] or StageGates.LevelRequirementsByWorld[1]
+
 	local bestUnlockedStage = "1"
-	for stageName, requiredLevel in pairs(StageGates.LevelRequriements) do
+	for stageName, requiredLevel in pairs(requirements) do
 		if tonumber(stageName) > tonumber(bestUnlockedStage) and playerData.Level >= requiredLevel then
 			bestUnlockedStage = stageName
 		end
@@ -111,9 +135,9 @@ local function GetBestUnlockedStage(player: Player): string
 	return bestUnlockedStage
 end
 
-local function GetPlayerTargetPositions(player: Player)
-	local bestUnlockedStage = GetBestUnlockedStage(player)
-	local stageFolder = workspace.Decorations.Stages:FindFirstChild("Stage" .. bestUnlockedStage)
+local function GetPlayerTargetPositions(player: Player, world: number)
+	local bestUnlockedStage = GetBestUnlockedStage(player, world)
+	local stageFolder = GetStagesRoot(world):FindFirstChild("Stage" .. bestUnlockedStage)
 	if not stageFolder then
 		warn("Stage folder not found " .. player.Name .. " at stage " .. bestUnlockedStage)
 		return nil, nil
@@ -144,14 +168,14 @@ local function PrepareCharacter(player: Player)
 	end
 
 	if player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
-		TeleportPlayerToStart(player.Character)
+		TeleportPlayerToStart(player.Character, data.World)
 		data.Ready = true
 		WatchForDeath(player, data)
 	else
 		data.Trove:Add(player.CharacterAdded:Connect(function(character)
 			local humanoid = character:WaitForChild("Humanoid")
 			if humanoid.Health > 0 then
-				TeleportPlayerToStart(character)
+				TeleportPlayerToStart(character, data.World)
 				data.Ready = true
 				WatchForDeath(player, data)
 			end
@@ -176,12 +200,14 @@ function SetAutoWins(player: Player, startAutoWins: boolean)
 	-- Clear out any previous session (and its connections) before starting fresh.
 	StopAutoWins(player.UserId)
 
-	local winPosition, midPosition = GetPlayerTargetPositions(player)
+	local world = DataManager.Get(player, "World") or 1
+	local winPosition, midPosition = GetPlayerTargetPositions(player, world)
 	if not winPosition or not midPosition then
 		return
 	end
 
 	AutoWinsPlayers[player.UserId] = {
+		World = world,
 		WinPosition = winPosition,
 		MidPosition = midPosition,
 		ReachedMid = false,

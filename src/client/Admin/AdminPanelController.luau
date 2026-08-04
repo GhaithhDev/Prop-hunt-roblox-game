@@ -51,6 +51,23 @@ local function wireSpawnTreadmillsSection(section: Frame)
 	end)
 end
 
+-- Typing "UFO" (any casing - "UFO", "Ufo", "ufo", ...) is just a confirmation
+-- word, not sensitive data - the real gate is the server's whitelist check on
+-- AdminAction itself, same as every other admin action.
+local function wireSpawnEventsSection(section: Frame)
+	local wordBox = section.InputFrame.TextBox
+	local durationBox = section.DurationInput.TextBox
+	local toggle = section.SpawnFrame.Toggle
+
+	toggle.Activated:Connect(function()
+		local word = wordBox.Text
+		local duration = tonumber(durationBox.Text)
+		if not word or word:lower() ~= "ufo" or not duration then return end
+
+		Net:RemoteEvent("AdminAction"):FireServer("StartUFOEvent", duration)
+	end)
+end
+
 function AdminPanelController.Start(controllers)
 	if AdminConfig.WHITELIST_ACTIVE and not table.find(AdminConfig.Whitelist, LocalPlayer.UserId) then
 		return
@@ -74,10 +91,11 @@ function AdminPanelController.Start(controllers)
 		end
 	end)
 
-	wireMultiplierSection(settings:WaitForChild("ShrinkBoost"), "SetXpMultiplier")
+	wireMultiplierSection(settings:WaitForChild("SpeedBoost"), "SetXpMultiplier")
 	wireMultiplierSection(settings:WaitForChild("WinsBoost"), "SetWinsMultiplier")
 	wireAnnouncementSection(settings:WaitForChild("Announcement"))
 	wireSpawnTreadmillsSection(settings:WaitForChild("SpawnTreadmills"))
+	wireSpawnEventsSection(settings:WaitForChild("SpawnEvents"))
 end
 
 return AdminPanelController

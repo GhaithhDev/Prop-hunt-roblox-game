@@ -101,4 +101,7 @@ return {
 	UIEffects = {
 		FlashWhiteScreen = { Name = "FlashWhiteScreen", Type = "Event" },
 	},
+	Events = {
+		AbductionStarted = {Name = "AbductionStarted", Type = "Event"}
+	}
 }

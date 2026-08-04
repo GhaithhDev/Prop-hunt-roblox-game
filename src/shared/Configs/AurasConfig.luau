@@ -16,11 +16,11 @@ export type Item = {
 -- meaningful to extract - the UI's price labels were uniform placeholders) -
 -- tune freely, any number of entries works.
 AurasConfig.Items = {
-	Purple = { Name = "Purple Aura", WinsCost = 10_000, Multiplier = 2, Color = Color3.fromRGB(170, 80, 255) },
-	Red = { Name = "Red Aura", WinsCost = 100_000, Multiplier = 4, Color = Color3.fromRGB(255, 60, 60) },
-	Yellow = { Name = "Yellow Aura", WinsCost = 1_000_000, Multiplier = 16, Color = Color3.fromRGB(255, 220, 60) },
-	Green = { Name = "Green Aura", WinsCost = 10_000_000, Multiplier = 32, Color = Color3.fromRGB(60, 220, 90) },
-	Blue = { Name = "Blue Aura", WinsCost = 100_000_000, Multiplier = 64, Color = Color3.fromRGB(60, 140, 255) },
+	Purple = { Name = "Purple Aura", WinsCost = 15_000, Multiplier = 2, Color = Color3.fromRGB(170, 80, 255) },
+	Red = { Name = "Red Aura", WinsCost = 15_000_000, Multiplier = 4, Color = Color3.fromRGB(255, 60, 60) },
+	Yellow = { Name = "Yellow Aura", WinsCost = 150_000_000, Multiplier = 6, Color = Color3.fromRGB(255, 220, 60) },
+	Green = { Name = "Green Aura", WinsCost = 5_000_000_000, Multiplier = 8, Color = Color3.fromRGB(60, 220, 90) },
+	Blue = { Name = "Blue Aura", WinsCost = 50_000_000_000, Multiplier = 10, Color = Color3.fromRGB(60, 140, 255) },
 } :: { [string]: Item }
 
 -- Returns 1 for "" (unequipped) or an unknown id.

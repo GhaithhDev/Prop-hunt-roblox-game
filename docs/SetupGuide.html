@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Keyboard Escape Template — Setup &amp; Customization Guide</title>
+<title>+1 Shrink Keyboard Escape Template — Setup &amp; Customization Guide</title>
 <style>
   @page { size: A4; margin: 20mm 18mm 22mm 18mm; }
   * { box-sizing: border-box; }
@@ -67,7 +67,7 @@
     letter-spacing: 2px; padding: 4pt 10pt; border-radius: 3px; margin-bottom: 14pt;
     width: fit-content; text-transform: uppercase;
   }
-  .cover h1 { font-size: 30pt; max-width: 420pt; }
+  .cover h1 { font-size: 28pt; max-width: 420pt; }
   .cover .sub-title { font-size: 13pt; color: #444; margin-top: 4pt; margin-bottom: 30pt; }
   .cover .footer-note { font-size: 9.5pt; color: #666; margin-top: 60pt; border-top: 1px solid #d8dee6; padding-top: 10pt; max-width: 380pt; }
   .badge {
@@ -90,11 +90,11 @@
 <!-- ============ COVER ============ -->
 <section class="cover">
   <span class="tag">Setup &amp; Customization Guide</span>
-  <h1>Keyboard Escape Template</h1>
+  <h1>+1 Shrink Keyboard Escape Template</h1>
   <div class="sub-title">A complete, no-programming-required walkthrough for configuring, rebranding, and balancing your copy of the template — done entirely inside Roblox Studio.</div>
   <p>This guide assumes no coding experience and no extra software. Every step tells you exactly which Explorer location to open, exactly what to change, and exactly what Studio screen to use. Anything that means editing a script uses a <span class="badge badge-code">SCRIPT</span> tag; anything done entirely inside Studio's Explorer/Properties uses a <span class="badge badge-studio">STUDIO</span> tag; anything done on the Roblox website uses a <span class="badge badge-web">WEBSITE</span> tag.</p>
   <div class="footer-note">
-    Covers: opening your place file under your own group · enabling required Roblox services · setting your Group ID · replacing every monetization ID with your own · balancing every knob in the game · admin access · adding Trails, Auras, and Obstacles. An optional appendix at the end covers Rojo, for anyone who prefers editing scripts in an external code editor.
+    Covers: opening your place file under your own group · enabling required Roblox services · setting your Group ID · replacing every monetization ID with your own · how the whole Shrink/Level/Wins/Rebirth/Worlds loop fits together · the Shrink (size) curve · Worlds 2 &amp; 3 · Stage Gates · every balancing knob · Treadmills · Auto Wins · Global Leaderboards · admin access · the level-design tag reference · adding Trails and Auras. An optional appendix at the end covers Rojo, for anyone who prefers editing scripts in an external code editor.
   </div>
 </section>
 
@@ -106,12 +106,19 @@
   <li><span class="num">2</span> Turning On the Services Your Game Needs</li>
   <li><span class="num">3</span> Setting Your Roblox Group</li>
   <li><span class="num">4</span> Replacing Every Monetization ID With Your Own</li>
-  <li><span class="num">5</span> Balancing the Game — Every Knob, Explained</li>
-  <li><span class="num">6</span> Giving Yourself Admin Access</li>
-  <li><span class="num">7</span> Adding a New Trail</li>
-  <li><span class="num">8</span> Adding a New Aura</li>
-  <li><span class="num">9</span> Adding a New Obstacle</li>
-  <li><span class="num">10</span> Pre-Publish Checklist</li>
+  <li><span class="num">5</span> How the Game Works — The Core Loop</li>
+  <li><span class="num">6</span> The Shrink System — Character Size &amp; the Level Curve</li>
+  <li><span class="num">7</span> Worlds — Balancing World 2 &amp; World 3</li>
+  <li><span class="num">8</span> Stage Gates — Level-Locked Barriers</li>
+  <li><span class="num">9</span> Balancing the Game — Every Other Knob</li>
+  <li><span class="num">10</span> Treadmills — Personal Speed Stations &amp; Rebirth-Gated Tiers</li>
+  <li><span class="num">11</span> Auto Wins — The Farm Toggle</li>
+  <li><span class="num">12</span> Global Leaderboards</li>
+  <li><span class="num">13</span> Giving Yourself Admin Access</li>
+  <li><span class="num">14</span> Level-Design Building Blocks — Tag Reference</li>
+  <li><span class="num">15</span> Adding a New Trail</li>
+  <li><span class="num">16</span> Adding a New Aura</li>
+  <li><span class="num">17</span> Pre-Publish Checklist</li>
   <li><span class="num">A</span> Appendix — Optional: Editing With Rojo</li>
 </ul>
 </section>
@@ -160,9 +167,9 @@
 
 <h3>2.2 What each service is used for (informational)</h3>
 <table class="kv">
-  <tr><td>Player data saving (Wins, Level, Rebirths, cosmetics, everything)</td><td><b>DataStoreService</b> — used by the data-saving system. If this is off, nobody's progress saves.</td></tr>
-  <tr><td>Global Level &amp; Wins leaderboards (the signboards in the world)</td><td><b>DataStoreService</b> — used by the Global Leaderboard system.</td></tr>
-  <tr><td>Admin Panel actions (XP/Wins boosts, announcements) reaching every live server at once</td><td><b>MessagingService</b> — this is on by default once API access is enabled; no separate switch.</td></tr>
+  <tr><td>Player data saving (Shrink XP, Level, Wins, Rebirths, World, cosmetics, everything)</td><td><b>DataStoreService</b> — used by the data-saving system. If this is off, nobody's progress saves.</td></tr>
+  <tr><td>Global Level, Wins &amp; Time Played leaderboards (the signboards in the world)</td><td><b>DataStoreService</b> — used by the Global Leaderboard system (Chapter 12).</td></tr>
+  <tr><td>Admin Panel actions (Shrink/Wins boosts, event treadmills, announcements) reaching every live server at once</td><td><b>MessagingService</b> — this is on by default once API access is enabled; no separate switch.</td></tr>
 </table>
 
 <div class="box warn">Once you <b>publish</b> the game (not just test in Studio), these services work automatically — the Studio toggle above only affects testing inside the editor. You do not need to touch "Allow HTTP Requests" — this template makes no external web requests.</div>
@@ -175,20 +182,20 @@
 
 <div class="box step-goal">Point the "join our group for a reward" feature at your own Roblox group instead of the template author's.</div>
 
-<p>Players who join your group and click Claim in-game receive a one-time XP reward. This is controlled by a single number.</p>
+<p>Players who join your group and click Claim in-game receive a one-time Shrink XP reward. This is controlled by a single number.</p>
 
 <table class="kv">
   <tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/GroupRewardsConfig</td></tr>
 </table>
 
 <pre><code>GroupRewardsConfig.GroupId = 423275116  -- replace with your Group ID
-GroupRewardsConfig.XpReward = 15000     -- how much XP the reward grants</code></pre>
+GroupRewardsConfig.XpReward = 15000     -- how much Shrink XP the reward grants</code></pre>
 
 <ol>
   <li><b>(Website)</b> Create (or open) your group on the Roblox website.</li>
   <li>Your Group ID is the number in the group's URL, e.g. <code>roblox.com/groups/<b>423275116</b>/My-Group</code>.</li>
   <li>Replace the number after <code>GroupRewardsConfig.GroupId =</code> with your group's number.</li>
-  <li>Optionally change <code>XpReward</code> to however much XP you want to grant (currently 15,000).</li>
+  <li>Optionally change <code>XpReward</code> to however much Shrink XP you want to grant (currently 15,000).</li>
 </ol>
 
 </section>
@@ -206,7 +213,7 @@ GroupRewardsConfig.XpReward = 15000     -- how much XP the reward grants</code><
 </table>
 
 <h3>4.1 Important — everything here is a Developer Product, even the "Game Passes"</h3>
-<p>This template purchases <i>everything</i> — including permanent unlocks like Trails, Auras, and Speed Pass tiers — as Roblox <b>Developer Products</b>, not as real Roblox Game Passes. This is intentional: unlike Game Passes, Developer Products can be gifted to another player, which is what makes a future "gift this to a friend" feature possible. The game's own code (behind the scenes) treats a Developer Product listed under the <code>GamePasses</code> section as a <i>permanent</i> unlock the moment it's purchased once — from a player's point of view it behaves exactly like a normal Game Pass. You never need to create an actual Game Pass on the Creator Dashboard for anything in this game.</p>
+<p>This template purchases <i>everything</i> — including permanent unlocks like Trails, Auras, Treadmill tiers, and Shrink Pass tiers — as Roblox <b>Developer Products</b>, not as real Roblox Game Passes. This is intentional: unlike Game Passes, Developer Products can be gifted to another player, which is what makes a future "gift this to a friend" feature possible. The game's own code (behind the scenes) treats a Developer Product listed under the <code>GamePasses</code> section as a <i>permanent</i> unlock the moment it's purchased once — from a player's point of view it behaves exactly like a normal Game Pass. You never need to create an actual Game Pass on the Creator Dashboard for anything in this game.</p>
 <div class="box warn">Wherever this guide (or the config script) says "GamePasses", create a <b>Developer Product</b> for it — not a Game Pass. This applies to every single entry in the file, in both the <code>GamePasses</code> section and the <code>DevProducts</code> section.</div>
 
 <h3>4.2 Step-by-step, for every single entry</h3>
@@ -219,109 +226,322 @@ GroupRewardsConfig.XpReward = 15000     -- how much XP the reward grants</code><
 <h3>4.3 Every permanent unlock (listed under <code>GamePasses</code> in the script)</h3>
 <table>
   <tr><th>Category</th><th>Entries (field names)</th><th>What it's for</th></tr>
-  <tr><td><code>Treadmills</code></td><td><code>Gold</code>, <code>Diamond</code>, <code>Zombie</code>, <code>Admin</code></td><td>Cosmetic/functional personal treadmill tiers a player can own.</td></tr>
-  <tr><td><code>Trails</code></td><td><code>Green</code>, <code>Blue</code>, <code>Purple</code>, <code>Red</code>, <code>Yellow</code></td><td>Cosmetic trail unlocks (see Chapter 7).</td></tr>
-  <tr><td><code>Auras</code></td><td><code>Purple</code>, <code>Red</code>, <code>Yellow</code>, <code>Green</code>, <code>Blue</code></td><td>Cosmetic aura unlocks (see Chapter 8).</td></tr>
-  <tr><td><code>SpeedPass</code></td><td><code>Tier2</code>, <code>Tier4</code>, <code>Tier8</code>, <code>Tier16</code></td><td>Permanent XP-per-press multiplier tiers.</td></tr>
-  <tr><td><code>WinsMultiplier</code></td><td><code>Double</code></td><td>Permanent 2× Wins unlock.</td></tr>
+  <tr><td><code>Treadmills</code></td><td><code>Gold</code>, <code>Diamond</code>, <code>Zombie</code>, <code>Admin</code></td><td>Personal treadmill tiers a player can own (Chapter 10).</td></tr>
+  <tr><td><code>Trails</code></td><td><code>Green</code>, <code>Blue</code>, <code>Purple</code>, <code>Red</code>, <code>Yellow</code></td><td>Cosmetic trail unlocks (Chapter 15).</td></tr>
+  <tr><td><code>Auras</code></td><td><code>Purple</code>, <code>Red</code>, <code>Yellow</code>, <code>Green</code>, <code>Blue</code></td><td>Cosmetic aura unlocks (Chapter 16).</td></tr>
+  <tr><td><code>ShrinkPass</code></td><td><code>Tier2</code>, <code>Tier4</code>, <code>Tier8</code>, <code>Tier16</code></td><td>Permanent Shrink-XP-per-press multiplier tiers (2×/4×/8×/16×, each replacing the last).</td></tr>
+  <tr><td><code>WinsMultiplier</code></td><td><code>Double</code></td><td>Permanent 2× Wins unlock (every stage's normal Wins reward, everywhere).</td></tr>
   <tr><td><code>KeycapSounds</code></td><td><code>Unlock</code></td><td>Unlocks all 8 premium keycap sounds at once.</td></tr>
 </table>
 
 <h3>4.4 Every repeatable purchase (listed under <code>DevProducts</code> in the script)</h3>
 <table>
   <tr><th>Category</th><th>Entries</th><th>What it's for</th></tr>
-  <tr><td><code>RebirthSkip</code></td><td>single ID</td><td>Skip the level requirement for your next rebirth.</td></tr>
+  <tr><td><code>RebirthSkip</code></td><td>single ID</td><td>Skip the Level requirement for your next rebirth.</td></tr>
   <tr><td><code>SkipToStage</code></td><td><code>["2"]</code> through <code>["10"]</code></td><td>Instantly teleport to that stage via Robux.</td></tr>
-  <tr><td><code>ReviveToPreviousStage</code></td><td>single ID</td><td>Revive-in-place after dying.</td></tr>
-  <tr><td><code>XpBoost</code></td><td>3 unnamed entries (list positions 1-3)</td><td>Temporary 2× XP boosts, increasing duration per tier.</td></tr>
-  <tr><td><code>ServerBoost</code></td><td>5 unnamed entries (2×, 4×, 6×, 8×, 10× — see code comments)</td><td>Server-wide XP multiplier, benefits every player on the server.</td></tr>
-  <tr><td><code>PlusPercentSpeed</code></td><td><code>FirstOption</code> (2%), <code>SecondOption</code> (5%), <code>ThirdOption</code> (12%)</td><td>One-time flat Speed bonus based on the buyer's current Speed.</td></tr>
+  <tr><td><code>ReviveToPreviousStage</code></td><td>single ID</td><td>Revive-in-place after dying, back at the stage you died on.</td></tr>
+  <tr><td><code>XpBoost</code></td><td>3 unnamed entries (list positions 1-3, matching <code>XpBoostConfig</code>'s 10/30/60 minute tiers)</td><td>Temporary 2× Shrink boosts, increasing duration per tier.</td></tr>
+  <tr><td><code>ServerBoost</code></td><td>5 unnamed entries (2×, 4×, 6×, 8×, 10× — see code comments)</td><td>Server-wide Shrink multiplier, benefits every player on the server.</td></tr>
+  <tr><td><code>PlusPercentShrink</code></td><td><code>FirstOption</code> (2%), <code>SecondOption</code> (5%), <code>ThirdOption</code> (12%)</td><td>One-time flat Shrink-XP bonus based on the buyer's current Shrink total.</td></tr>
+  <tr><td><code>x2Win</code></td><td>single ID, shared by every stage</td><td>Doubles the Wins earned from whichever win pad the player is currently standing at (Chapter 9.1).</td></tr>
 </table>
 
 <div class="box tip">The <code>XpBoost</code> and <code>ServerBoost</code> entries are plain lists (no names) — replace the numbers in the same order, left to right, and don't change how many entries are in the list.</div>
 
 </section>
 
-<!-- ============ 5. BALANCING ============ -->
+<!-- ============ 5. CORE LOOP ============ -->
 <section>
-<h2 id="s5">5. Balancing the Game — Every Knob, Explained</h2>
-<div class="box step-goal">A complete reference of every number in the game that affects pacing, difficulty, or the in-game economy — where it lives, what it currently is, and what changing it does.</div>
+<h2 id="s5">5. How the Game Works — The Core Loop</h2>
+<div class="box step-goal">A plain-English map of how every system in this game connects to every other one, so the balancing chapters that follow actually make sense. Nothing to configure here — just read it once.</div>
 
-<h3>5.1 Wins earned per stage</h3>
-<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/WinsConfig</td></tr></table>
-<pre><code>WinsConfig.WinsByStage = {
-    [1] = 1,   [2] = 3,   [3] = 10,  [4] = 100, [5] = 500,
-    [6] = 600, [7] = 700, [8] = 800, [9] = 900, [10] = 1000, ...
-}</code></pre>
-<p>How many Wins (the in-game currency) a player earns for reaching each stage. Raising a value speeds up how fast players can afford teleports and cosmetics; lowering it slows the whole economy down.</p>
+<h3>5.1 The moment-to-moment loop</h3>
+<ol>
+  <li><b>Press keycaps.</b> Each stage's floor is tiled with keycaps (Chapter 14.5). Pressing one grants the player <b>Shrink</b> — this game's XP stat (internally still called <code>Shrink</code> in the data, shown to players as "Shrink").</li>
+  <li><b>Shrink accumulates into Level.</b> <code>LevelConfig</code> defines how much Shrink each next Level costs (Chapter 9.3). Leveling up is announced with a popup showing the old/new "Shrink Score" (a cosmetic 1→1000 display number, unrelated to the raw Shrink stat — see Chapter 6).</li>
+  <li><b>Level shrinks the character.</b> <code>ShrinkConfig</code> maps the player's current Level onto a character scale between 1.0 (full size) and 0.2 (fully shrunk) — see Chapter 6. This is the whole "+1 Shrink" hook: the higher you level, the smaller you get.</li>
+  <li><b>Higher Level unlocks things.</b> Stage Gates open at Level thresholds (Chapter 8), Rebirth becomes available at a Level threshold (Chapter 9.2), and Worlds 2/3 unlock at Level thresholds (Chapter 7).</li>
+  <li><b>Reaching a stage's win pad grants Wins</b> — the other currency, spent on cosmetics, teleport skips, and the press-multiplier stands next to the keycap floor (Chapter 9.1/9.6). Wins do not reset on Rebirth.</li>
+  <li><b>Rebirth resets Level and Shrink back to 0</b> (character pops back to full size) <b>in exchange for a permanent Shrink-gain multiplier</b> that stacks with everything else (Chapter 9.2). This is the prestige loop.</li>
+  <li><b>Worlds are separate zones, each with their own full stage/keycap/Wins/Shrink progression</b> layered on the same never-resetting Level stat (Chapter 7). Reaching World 2 or 3 doesn't reset Level — it just remaps that same Level onto a fresh 1.0→0.2 shrink curve and a fresh set of stage gates.</li>
+</ol>
 
-<h3>5.2 Rebirth tiers</h3>
-<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/RebirthConfig</td></tr></table>
-<pre><code>RebirthConfig.Tiers = {
-    [1]  = { RequiredLevel = 5,   Multiplier = 2 },
-    [2]  = { RequiredLevel = 10,  Multiplier = 3 },
-    [3]  = { RequiredLevel = 15,  Multiplier = 4 },
-    ...
-    [18] = { RequiredLevel = 355, Multiplier = 80 },
-    [19] = { RequiredLevel = 380, Multiplier = 95 },
-    [20] = { RequiredLevel = 400, Multiplier = 115 },  -- max tier
-}</code></pre>
-<p><code>RequiredLevel</code> is how high a player's Level must be to perform that rebirth (higher = harder to reach). <code>Multiplier</code> is the permanent XP-gain multiplier they keep afterward (higher = bigger permanent power jump). Tier 20 is the maximum — players who exceed it stay at tier 20's multiplier.</p>
+<h3>5.2 What multiplies what</h3>
+<p>Everything that boosts <i>Shrink gain per keycap press</i> stacks multiplicatively (see <span class="path">ReplicatedStorage/Shared/Packages/XpPerPress</span>): Rebirth multiplier × Aura multiplier × Trail multiplier × personal Treadmill multiplier × temporary Shrink Boost (2× while active) × Shrink Pass tier × server-wide Server Boost × any Admin-set multiplier. <i>Wins</i> earned per stage is a separate number (<code>WinsConfig</code>) that only the <code>WinsMultiplier</code> gamepass, the per-touch <code>x2Win</code> purchase, and the Admin Wins multiplier affect.</p>
 
-<h3>5.3 Level / XP curve</h3>
-<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/LevelConfig</td></tr></table>
-<pre><code>LevelConfig.BaseXp = 250       -- XP needed for level 1 -> 2
-LevelConfig.GrowthRate = 1.2   -- how much more each next level costs</code></pre>
-<p>Raising <code>BaseXp</code> makes the very first level-up take longer (and scales every level after it proportionally). Raising <code>GrowthRate</code> makes later levels cost disproportionately more than earlier ones — it steepens the whole curve rather than shifting it evenly. Levels up to 300 are pre-calculated in a lookup table in this same script for performance; if you change these two numbers you're changing the formula used beyond level 300 — for hand-tuning specific early levels, edit the table entries directly instead.</p>
-
-<h3>5.4 Stage teleport (skip) prices</h3>
-<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TeleportConfig</td></tr></table>
-<table>
-<tr><th>Stage</th><th>Wins Cost</th></tr>
-<tr><td>2</td><td>2</td></tr><tr><td>3</td><td>6</td></tr><tr><td>4</td><td>20</td></tr>
-<tr><td>5</td><td>40</td></tr><tr><td>6</td><td>100</td></tr><tr><td>7</td><td>200</td></tr>
-<tr><td>8</td><td>300</td></tr><tr><td>9</td><td>600</td></tr><tr><td>10</td><td>1000</td></tr>
-</table>
-<p>The Wins price to skip straight to that stage (players can also pay Robux via the matching <code>SkipToStage</code> Developer Product — Chapter 4). Raising a stage's cost pushes players toward either grinding more or paying Robux; lowering it makes the grind path more attractive.</p>
-
-<h3>5.5 Cosmetic prices &amp; power (Trails / Auras)</h3>
-<table>
-<tr><th>Trail</th><th>Wins Cost</th><th>XP Multiplier</th></tr>
-<tr><td>Green</td><td>300</td><td>1.5×</td></tr>
-<tr><td>Blue</td><td>1,200</td><td>2×</td></tr>
-<tr><td>Purple</td><td>5,000</td><td>3×</td></tr>
-<tr><td>Red</td><td>15,000</td><td>4×</td></tr>
-<tr><td>Yellow</td><td>40,000</td><td>5×</td></tr>
-</table>
-<table>
-<tr><th>Aura</th><th>Wins Cost</th><th>XP Multiplier</th></tr>
-<tr><td>Purple</td><td>400</td><td>1.2×</td></tr>
-<tr><td>Red</td><td>1,500</td><td>1.5×</td></tr>
-<tr><td>Yellow</td><td>6,000</td><td>2×</td></tr>
-<tr><td>Green</td><td>18,000</td><td>3×</td></tr>
-<tr><td>Blue</td><td>45,000</td><td>4×</td></tr>
-</table>
-<p>Trail and Aura multipliers <b>stack multiplicatively</b> with everything else (Rebirth, Treadmill, boosts) when calculating XP-per-keypress. Raising <code>WinsCost</code> in either script makes that cosmetic more expensive; raising <code>Multiplier</code> makes it more powerful while equipped. Scripts: <span class="path">ReplicatedStorage/Shared/Configs/TrailsConfig</span> and <span class="path">ReplicatedStorage/Shared/Configs/AurasConfig</span>.</p>
-
-<h3>5.6 Everything that stacks into XP-per-press</h3>
-<table class="kv"><tr><td>Script (informational)</td><td class="path">ReplicatedStorage/Shared/Packages/XpPerPress</td></tr></table>
-<p>This multiplies together, in order: Rebirth multiplier, Aura multiplier, Trail multiplier, personal Treadmill multiplier, temporary XP Boost (fixed 2× while active), Speed Pass tier, server-wide Server Boost, and any Admin-set multiplier. There's no single number to change here — this script just combines all the multipliers listed above.</p>
-
-<h3>5.7 Flat Speed-bonus purchase tiers</h3>
-<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/PlusPercentSpeedConfig</td></tr></table>
-<pre><code>FirstOption  = 0.02  -- 2%
-SecondOption = 0.05  -- 5%
-ThirdOption  = 0.12  -- 12%</code></pre>
-<p>Each purchase grants a one-time flat bonus equal to this percentage of the player's <i>current</i> Speed stat at the moment of purchase. Raising these numbers makes each purchase grant a bigger permanent jump.</p>
-
-<h3>5.8 Keycap sounds (cosmetic only)</h3>
-<p><span class="path">ReplicatedStorage/Shared/Configs/KeycapSoundConfig</span> — purely cosmetic, no balance impact. Each sound has a <code>Free</code> flag; non-free ones unlock together via the single <code>KeycapSounds.Unlock</code> entry from Chapter 4.</p>
+<div class="box tip">Every per-world config in this game (Wins, Stage Gates, Shrink curve, teleport prices, press-multiplier stands) is keyed by the player's current <code>World</code> value and falls back to World 1's table if a world has no entry — so it's always safe to leave World 2/3 half-tuned while you test, nothing will error.</div>
 
 </section>
 
-<!-- ============ 6. ADMIN ============ -->
+<!-- ============ 6. SHRINK SYSTEM ============ -->
 <section>
-<h2 id="s6">6. Giving Yourself Admin Access</h2>
+<h2 id="s6">6. The Shrink System — Character Size &amp; the Level Curve</h2>
+<div class="box step-goal">Control exactly how small a player gets, how fast, and at what Level — independently for each of the 3 worlds.</div>
+
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/ShrinkConfig</td></tr></table>
+
+<h3>6.1 The big picture</h3>
+<p>A player's <b>Level</b> is one single, ever-increasing stat shared across every world (Rebirth is the only thing that resets it). Each world, however, maps that same Level onto its <i>own</i> shrink curve, over its own Level range:</p>
+<pre><code>ShrinkConfig.BaseScale = 1.0   -- full size, at or below a world's MinLevel
+ShrinkConfig.MinScale  = 0.2   -- fully shrunk, at or above a world's MaxLevel
+ShrinkConfig.MaxWorld  = 3
+
+ShrinkConfig.LevelRangeByWorld = {
+    [1] = { MinLevel = 1,   MaxLevel = 400 },
+    [2] = { MinLevel = 1,   MaxLevel = 875 },
+    [3] = { MinLevel = 1,   MaxLevel = 1800 },
+}</code></pre>
+<p>Practically: a player who teleports to World 2 at Level 10 reads as full size again (Level 10 ≤ World 2's MinLevel-relative range start), then shrinks back down as their Level climbs toward World 2's own <code>MaxLevel</code> of 875. Raising a world's <code>MaxLevel</code> stretches out that world's shrink (and Shrink Score, see 6.3) progression over more Levels; lowering it compresses it into fewer.</p>
+
+<h3>6.2 The per-level scale tables</h3>
+<p>Below <code>LevelRangeByWorld</code>, <code>ScaleByLevelByWorld[1]</code>/<code>[2]</code>/<code>[3]</code> are large precomputed tables — one scale value per Level, linearly interpolated from 1.000 down to 0.200 across that world's range. This is intentional: it lets you hand-tune any single Level's exact scale (e.g. make Level 250 shrink a little extra for a "milestone" feel) by editing that one entry, without touching any formula.</p>
+<pre><code>-- World 1 excerpt:
+ScaleByLevelByWorld[1] = {
+    [1] = 1.000, [2] = 0.998, [3] = 0.996, ...
+    [400] = 0.202, -- clamped to MinScale (0.2) by GetScaleForLevel once Level >= MaxLevel
+}</code></pre>
+<div class="box warn">These tables are generated, not hand-typed — if you change a world's <code>MinLevel</code>/<code>MaxLevel</code> range, the corresponding table needs to be regenerated to match (every Level in the new range needs an entry). If you're not comfortable writing a script for that, ask your developer to regenerate it, or keep the ranges as shipped and only hand-tune individual entries.</div>
+
+<h3>6.3 Shrink Score — the cosmetic level-up number</h3>
+<p><code>ShrinkScoreByLevelByWorld[1]</code>/<code>[2]</code>/<code>[3]</code> is a second table, shown to the player on the level-up popup (Chapter 5.1) as a "Shrink Score" for that world, scaled off the player's position within that world's Level range. It has no gameplay effect; it exists purely so players have a clean, world-relative number to chase instead of a raw Level number that keeps climbing forever.</p>
+
+<h3>6.4 Shrink Pass — a purchasable multiplier, not a size boost</h3>
+<p>Despite the name, the <code>ShrinkPass</code> gamepass (Chapter 4.3) does not change character size directly — it multiplies Shrink-XP-per-press (Chapter 5.2), which makes the player Level up (and therefore shrink) faster. Configured in <span class="path">ReplicatedStorage/Shared/Configs/ShrinkPassConfig</span>:</p>
+<pre><code>ShrinkPassConfig.Tiers = {
+    { Id = "Tier2",  Multiplier = 2 },
+    { Id = "Tier4",  Multiplier = 4 },
+    { Id = "Tier8",  Multiplier = 8 },
+    { Id = "Tier16", Multiplier = 16 },
+}</code></pre>
+<p>Owning a higher tier replaces the lower one (not additive) — order in this list matters, since the game walks it to find "the next tier this player doesn't own yet" for the shop UI.</p>
+
+</section>
+
+<!-- ============ 7. WORLDS ============ -->
+<section>
+<h2 id="s7">7. Worlds — Balancing World 2 &amp; World 3</h2>
+<div class="box step-goal">Understand how the 3-world structure is built in Explorer, and how to retune when each world unlocks.</div>
+
+<h3>7.1 Level requirement to unlock each world</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TeleportWorldsConfig</td></tr></table>
+<pre><code>TeleportWorldsConfig.LevelRequirement = {
+    [1] = 0,
+    [2] = 400,
+    [3] = 875,
+}</code></pre>
+<p>World 2 unlocks once a player has finished shrinking all the way through World 1 (Level 400, its <code>MaxLevel</code> — Chapter 6.1), and World 3 unlocks once they've finished World 2 (Level 875, World 2's own <code>MaxLevel</code>) — each world's requirement lines up with the previous world's shrink curve topping out, so a player always arrives at the next world already at Level 1 relative to that world's own range (full size again, per Chapter 6.1's per-world remap). Raise or lower these numbers if you'd rather gate world access at a different point in progress.</p>
+
+<h3>7.2 How a world is laid out in the Explorer <span class="badge badge-studio">STUDIO</span></h3>
+<p>World 1 keeps every path this template originally shipped with, unprefixed, directly under <code>Workspace</code> (e.g. <span class="path">Workspace/Functional</span>, <span class="path">Workspace/Decorations</span>). World 2 and World 3 are each a self-contained copy of that same structure, nested one level deeper:</p>
+<table class="kv">
+  <tr><td>World 1</td><td class="path">Workspace/Functional/…</td></tr>
+  <tr><td>World 2</td><td class="path">Workspace/World2/Functional/…</td></tr>
+  <tr><td>World 3</td><td class="path">Workspace/World3/Functional/…</td></tr>
+</table>
+<p>Everything that's per-world at the Studio level — the spawn location, the Decorations/Stages folders used by Auto Wins (Chapter 11), the Stage Gates (Chapter 8) — follows this same "World1 stays at the root, World2/3 live under their own <code>WorldN</code> folder" convention. When building out World 2 or 3's physical level, duplicate World 1's <code>Functional</code>/<code>Decorations</code> structure into the matching <code>WorldN</code> folder rather than inventing a new layout.</p>
+
+<h3>7.3 The teleport pads between worlds <span class="badge badge-studio">STUDIO</span></h3>
+<p>The actual "teleport to World N" destination points live at <span class="path">Workspace/Functional/WorldsTeleportPositions</span>, as three Parts named <code>"1"</code>, <code>"2"</code>, and <code>"3"</code>. A player teleporting to a world is moved to that world's matching named Part.</p>
+
+<h3>7.4 Everything else that's already per-world</h3>
+<p>Wins-per-stage (<code>WinsConfig.WinsByWorld</code>), teleport-skip prices (<code>TeleportConfig.StagesByWorld</code>), and press-multiplier stand thresholds (<code>XpPerPressConfig.OptionsByWorld</code>) are all separately keyed by world already — see Chapter 9 for tuning each. World 2/3's shipped numbers are placeholder progressions (roughly World 1 × 10 / × 100) — treat them as a starting point, not a balanced curve.</p>
+
+</section>
+
+<!-- ============ 8. STAGE GATES ============ -->
+<section>
+<h2 id="s8">8. Stage Gates — Level-Locked Barriers</h2>
+<div class="box step-goal">Understand and retune the invisible walls that block a player from a stage until they've reached the right Level.</div>
+
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/StageGates</td></tr></table>
+
+<h3>8.1 How it works</h3>
+<p>Every gate Part in the world is tagged <code>StageGate</code> (via Studio's Tag Editor plugin — see Chapter 14) and named after the stage number it guards, e.g. <code>"5"</code>. On the client, its <code>CanCollide</code> is turned off the moment the player's Level meets that stage's requirement for their <i>current world</i> — this is purely a local physics check, so it updates instantly as the player levels up or changes world, with no server round-trip.</p>
+<table class="kv">
+  <tr><td>World 1 gates</td><td class="path">Workspace/Functional/StageGates/World1/&lt;stage number&gt;</td></tr>
+  <tr><td>World 2 gates</td><td class="path">Workspace/Functional/StageGates/World2/&lt;stage number&gt;</td></tr>
+  <tr><td>World 3 gates</td><td class="path">Workspace/Functional/StageGates/World3/&lt;stage number&gt;</td></tr>
+</table>
+<p>Which world's <code>LevelRequirementsByWorld</code> table a gate is checked against is driven entirely by the player's own current World value, not by the gate's location — but every gate should still be built under the matching <code>StageGates/WorldN</code> folder shown above, so the physical level layout for each world stays organized and matches the same per-world convention used everywhere else in Chapter 7.2 (Functional, Decorations, AutoWinsStart, etc.).</p>
+<pre><code>StageGates.LevelRequirementsByWorld = {
+    [1] = { ["1"] = 5, ["2"] = 10, ["3"] = 15, ... ["20"] = 400 },
+    [2] = { ["1"] = 1, ["2"] = 425, ... ["20"] = 875 },
+    [3] = { ["1"] = 1, ["2"] = 900, ... ["20"] = 1800 },
+}</code></pre>
+<p>Raise a stage's number to require more Level before that gate opens; lower it to open sooner. A stage name with no entry stays permanently closed (fail-safe) rather than defaulting to open, so double-check every gate you place in Studio has a matching entry here.</p>
+
+<h3>8.2 Placing a new gate <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>Build the gate as a normal Part (or Model with a Part) spanning the path you want blocked.</li>
+  <li>Parent it under the matching world's folder, e.g. <span class="path">Workspace/Functional/StageGates/World2</span> if it belongs to World 2.</li>
+  <li>Using Studio's Tag Editor plugin, add the <code>StageGate</code> tag to it.</li>
+  <li>Name the Part (or its tagged Part) to match the stage number key you want it to use, e.g. <code>"7"</code>.</li>
+  <li>Add a matching entry under that same world's table in <code>StageGates.LevelRequirementsByWorld</code>.</li>
+</ol>
+
+</section>
+
+<!-- ============ 9. BALANCING ============ -->
+<section>
+<h2 id="s9">9. Balancing the Game — Every Other Knob</h2>
+<div class="box step-goal">A complete reference of every remaining number in the game that affects pacing, difficulty, or the in-game economy — where it lives, what it currently is, and what changing it does.</div>
+
+<h3>9.1 Wins earned per stage, per world</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/WinsConfig</td></tr></table>
+<pre><code>WinsConfig.WinsByWorld = {
+    [1] = { [1] = 1, [2] = 5, [3] = 25, [4] = 50, [5] = 100, ... [20] = 750_000 },
+    [2] = { [1] = 1_000_000, ... [20] = 250_000_000 },
+    [3] = { [1] = 300_000_000, ... [20] = 30_000_000_000 },
+}</code></pre>
+<p>How many Wins a player earns for reaching each stage in each world. Raising a value speeds up how fast players can afford teleports and cosmetics; lowering it slows the whole economy down. A <code>RequireRobux</code> attribute on a win pad's Part switches it to a Robux-only "2× Wins" pad instead (see the <code>x2Win</code> Developer Product, Chapter 4.4) — its label shows the Robux price automatically.</p>
+
+<h3>9.2 Rebirth tiers</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/RebirthConfig</td></tr></table>
+<pre><code>RebirthConfig.Tiers = {
+    [1]  = { RequiredLevel = 10,  Multiplier = 2 },
+    [2]  = { RequiredLevel = 20,  Multiplier = 3 },
+    [3]  = { RequiredLevel = 40,  Multiplier = 4 },
+    ...
+    [33] = { RequiredLevel = 1900, Multiplier = 110 },
+    [34] = { RequiredLevel = 2000, Multiplier = 115 }, -- max tier
+}</code></pre>
+<p><code>RequiredLevel</code> is how high a player's Level must be to perform that rebirth (higher = harder to reach). <code>Multiplier</code> is the permanent Shrink-gain multiplier they keep afterward (stacks with everything in Chapter 5.2). Performing a rebirth resets both Level and Shrink to 0 (the character pops back to full size) and reloads the character. The highest-numbered tier is the maximum — players who exceed it stay at that tier's multiplier forever, and can still rebirth again for the same reward.</p>
+
+<h3>9.3 Level / Shrink-XP curve</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/LevelConfig</td></tr></table>
+<pre><code>LevelConfig.BaseFactor = 12.968167082447044
+LevelConfig.Exponent = 1.4
+LevelConfig.MaxPrecomputedLevel = 2000</code></pre>
+<p>The Shrink XP needed to go from Level <code>n</code> to <code>n+1</code> is <code>round(BaseFactor * n ^ Exponent)</code>. Because <code>Exponent</code> is greater than 1, each step costs more than the last, and grows increasingly steeply the higher <code>n</code> gets — cheap early levels, a harder and harder climb later. Raising <code>BaseFactor</code> scales every level's cost up proportionally (the whole curve gets harder evenly); raising <code>Exponent</code> steepens the curve's shape instead (later levels get disproportionately harder relative to early ones). Levels up to <code>MaxPrecomputedLevel</code> are pre-calculated into a lookup table in this same script for performance — for hand-tuning specific individual levels, edit the table entries directly instead of the formula.</p>
+
+<h3>9.4 Stage teleport (skip) prices, per world</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TeleportConfig</td></tr></table>
+<pre><code>TeleportConfig.StagesByWorld = {
+    [1] = {
+        { TeleportTo = 2, WinsCost = 5, UIcolor = Color3.fromRGB(60, 245, 255) },
+        { TeleportTo = 3, WinsCost = 25, UIcolor = Color3.fromRGB(60, 255, 140) },
+        ... up to TeleportTo = 20 ...
+    },
+    [2] = { ... }, -- separate WinsCost progression for World 2
+    [3] = { ... }, -- separate WinsCost progression for World 3
+}</code></pre>
+<p>The Wins price to skip straight to that stage, for the player's current world (players can also pay Robux via the matching <code>SkipToStage</code> Developer Product — a single shared ID per stage number across all worlds, Chapter 4.4). Raising a stage's cost pushes players toward either grinding more or paying Robux; lowering it makes the grind path more attractive. <code>UIcolor</code> only affects the generated menu frame's background tint.</p>
+
+<h3>9.5 Cosmetic prices &amp; power (Trails / Auras)</h3>
+<table>
+<tr><th>Trail</th><th>Wins Cost</th><th>Shrink Multiplier</th><th>Walk Speed</th></tr>
+<tr><td>Green</td><td>500</td><td>1.5×</td><td>30</td></tr>
+<tr><td>Blue</td><td>50,000</td><td>2×</td><td>35</td></tr>
+<tr><td>Purple</td><td>5,000,000</td><td>3×</td><td>40</td></tr>
+<tr><td>Red</td><td>50,000,000</td><td>4×</td><td>45</td></tr>
+<tr><td>Yellow</td><td>5,000,000,000</td><td>5×</td><td>50</td></tr>
+</table>
+<table>
+<tr><th>Aura</th><th>Wins Cost</th><th>Shrink Multiplier</th></tr>
+<tr><td>Purple</td><td>15,000</td><td>2×</td></tr>
+<tr><td>Red</td><td>15,000,000</td><td>4×</td></tr>
+<tr><td>Yellow</td><td>150,000,000</td><td>6×</td></tr>
+<tr><td>Green</td><td>5,000,000,000</td><td>8×</td></tr>
+<tr><td>Blue</td><td>50,000,000,000</td><td>10×</td></tr>
+</table>
+<p>Trail and Aura multipliers stack multiplicatively with everything else (Chapter 5.2) while equipped. Trails additionally set the player's <code>Humanoid.WalkSpeed</code> outright (not a bonus on top — the equipped trail's <code>WalkSpeed</code> replaces it, or <code>TrailsConfig.BaseWalkSpeed = 25</code> if nothing is equipped) — this is the only system in the game that touches WalkSpeed. Raising <code>WinsCost</code> in either script makes that cosmetic more expensive; raising <code>Multiplier</code> makes it more powerful while equipped. Scripts: <span class="path">ReplicatedStorage/Shared/Configs/TrailsConfig</span> and <span class="path">ReplicatedStorage/Shared/Configs/AurasConfig</span>.</p>
+
+<h3>9.6 Press-multiplier stands (Shrink-per-keycap-press options)</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/XpPerPressConfig</td></tr></table>
+<p>Matches Parts named <code>"1"</code> through <code>"8"</code> (or more) under <span class="path">Workspace/Functional/XpPerPressOptions</span>, one set per world, each with a <code>World</code> attribute. Standing on/touching one equips it if the player has enough Wins:</p>
+<pre><code>XpPerPressConfig.OptionsByWorld[1] = {
+    [1] = { StepAmount = 1,   WinsRequired = 0 },
+    [2] = { StepAmount = 2,   WinsRequired = 3 },
+    ...
+    [18] = { StepAmount = 1000, WinsRequired = 3_500_000 },
+}</code></pre>
+<p><code>StepAmount</code> is the raw Shrink XP granted per keycap press while that option is equipped (before any of the Chapter 5.2 multipliers are applied); <code>WinsRequired</code> is the Wins total needed to unlock it. The game automatically keeps a player equipped on the <i>highest</i> option they can currently afford, and re-checks this any time their Wins changes (earned or spent) — you never need to touch the equipped-option logic itself, just these two numbers per tier.</p>
+
+<h3>9.7 Flat Shrink-bonus purchase tiers</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/PlusPercentShrinkConfig</td></tr></table>
+<pre><code>FirstOption  = 0.02  -- 2%
+SecondOption = 0.05  -- 5%
+ThirdOption  = 0.12  -- 12%</code></pre>
+<p>Each purchase grants a one-time flat Shrink XP bonus equal to this percentage of the player's <i>current</i> Shrink stat at the moment of purchase (Chapter 4.4's <code>PlusPercentShrink</code> Developer Products). Raising these numbers makes each purchase grant a bigger one-time jump.</p>
+
+<h3>9.8 Temporary Shrink boosts</h3>
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/XpBoostConfig</td></tr></table>
+<pre><code>{ DurationMinutes = 10 }, { DurationMinutes = 30 }, { DurationMinutes = 60 }</code></pre>
+<p>Each entry auto-generates one tier in the Shop's "2× Shrink" section, always a flat 2× multiplier for that long — only the duration differs per tier. Each entry needs a matching <code>MonetizationConfig.DevProducts.XpBoost</code> price (Chapter 4.4, matched by list position, not by duration).</p>
+
+<h3>9.9 Keycap sounds (cosmetic only)</h3>
+<p><span class="path">ReplicatedStorage/Shared/Configs/KeycapSoundConfig</span> — purely cosmetic, no balance impact. Each sound has a <code>Free</code> flag; non-free ones unlock together via the single <code>KeycapSounds.Unlock</code> entry from Chapter 4.3.</p>
+
+</section>
+
+<!-- ============ 10. TREADMILLS ============ -->
+<section>
+<h2 id="s10">10. Treadmills — Personal Speed Stations &amp; Rebirth-Gated Tiers</h2>
+<div class="box step-goal">Understand the personal treadmill system players can spawn to passively earn Shrink XP, including tiers gated by Rebirth count instead of (or in addition to) a gamepass.</div>
+
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TreadmillConfig</td></tr></table>
+
+<h3>10.1 How it works</h3>
+<p>A player can spawn their own personal treadmill near themselves (bound to a UI toggle, firing the <code>ToggleSpawn</code> remote); standing on any treadmill (their own, or one placed permanently in the world under <span class="path">Workspace/Functional/Treadmills</span>) grants Shrink XP every <code>XpTickInterval</code> seconds (default 0.05s) at that treadmill's <code>Multiplier</code>. Only one personal treadmill exists per player at a time — spawning a new one, or walking off, despawns the old one automatically.</p>
+
+<h3>10.2 Treadmill tiers &amp; gating <span class="badge badge-studio">STUDIO</span></h3>
+<p>Personal treadmill tiers are Models under <span class="path">ReplicatedStorage/Shared/Assets/PlayerTreadmills</span>, each carrying Attributes (Properties panel → Attributes → +):</p>
+<table>
+  <tr><th>Attribute</th><th>Type</th><th>Meaning</th></tr>
+  <tr><td><code>Multiplier</code></td><td>Number</td><td>Shrink-gain multiplier while standing on this tier.</td></tr>
+  <tr><td><code>RequiresGamePass</code></td><td>Boolean</td><td>If true, the player must own the matching gamepass to use this tier.</td></tr>
+  <tr><td><code>GamePassName</code></td><td>String</td><td>Must match a key under <code>MonetizationConfig.GamePasses.Treadmills</code> (Chapter 4.3), e.g. <code>"Gold"</code>.</td></tr>
+  <tr><td><code>RebirthRequirement</code></td><td>Number (optional)</td><td>Minimum Rebirth count required to use this tier — this is the "Rebirth Treadmill" gating. Can be combined with <code>RequiresGamePass</code> for a tier that needs both.</td></tr>
+</table>
+<p>The game always spawns the <i>highest-Multiplier</i> tier a player is currently eligible for. A player who doesn't yet own a required gamepass gets prompted to buy it (rate-limited to once every few seconds); a player short on Rebirths gets a "Need N Rebirth" notification instead.</p>
+
+<h3>10.3 Admin-spawned event treadmills</h3>
+<p>Temporary, ungated, world-wide treadmills any player can stand on — spawned via the Admin Panel's <code>SpawnEventTreadmill</code> action (Chapter 13) for a limited duration, always replacing any currently-active event treadmill. Templates live under <span class="path">ReplicatedStorage/Shared/Assets/EventTreadmills</span> (each just needs a <code>Multiplier</code> attribute, no gamepass gating), and spawn at a single fixed Part: <span class="path">Workspace/Functional/EventTreadmillSpawnCFrame</span>. Two ship with the template out of the box — <code>UFO</code> and <code>Radioactive</code> — and the Admin Panel's action takes that exact name (case-insensitive) to pick which one to spawn; add more by dropping a new Model with a <code>Multiplier</code> attribute into the same folder.</p>
+
+</section>
+
+<!-- ============ 11. AUTO WINS ============ -->
+<section>
+<h2 id="s11">11. Auto Wins — The Farm Toggle</h2>
+<div class="box step-goal">Understand the "Auto Wins" button players can toggle to have their character automatically walk back and forth to the best win pad they've unlocked, and what Studio structure it depends on.</div>
+
+<h3>11.1 What it does</h3>
+<p>Toggling the button (<span class="path">Main/RightIcons/AutoWins/Button</span> in the player's UI) fires the <code>SetAutoWins</code> remote. While enabled, the server walks the player's character between their current world's <code>AutoWinsStart</code> position and the win pad of the <i>highest stage gate they've already unlocked</i> (Chapter 8), banking Wins on every lap. Any manual movement input from the player immediately force-disables it client-side (they've taken control back).</p>
+
+<h3>11.2 Required Studio structure <span class="badge badge-studio">STUDIO</span></h3>
+<table class="kv">
+  <tr><td>Farm start position</td><td class="path">Workspace/Functional/AutoWinsStart/1 (or /2, /3)</td></tr>
+  <tr><td>Per-stage win pads</td><td class="path">…/Stages/StageN/Wins/FreeWins and …/Stages/StageN/Wins/2xWins</td></tr>
+</table>
+<p><code>AutoWinsStart</code> is a Folder containing one BasePart per world, named <code>"1"</code>, <code>"2"</code>, <code>"3"</code> — this is where the character starts each farming lap and where it's teleported after every win pad touch (Chapter 9.1's <code>grantStageWins</code>). Each Stage folder (found via the same per-world Stages root as Chapter 7.2) needs a <code>Wins</code> subfolder containing a <code>FreeWins</code> Part and a <code>2xWins</code> Part — Auto Wins walks to the midpoint between the two first, then on to <code>FreeWins</code> specifically (it never auto-triggers the Robux-only 2× pad).</p>
+
+</section>
+
+<!-- ============ 12. LEADERBOARDS ============ -->
+<section>
+<h2 id="s12">12. Global Leaderboards</h2>
+<div class="box step-goal">Understand the three cross-server signboards and how to retune their refresh rates.</div>
+
+<table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/LeaderboardConfig</td></tr></table>
+<pre><code>{
+    TopCount = 50,               -- entries shown per board
+    StatSyncInterval = 30,       -- seconds between pushing a player's changed stat
+    DisplayRefreshInterval = 60, -- seconds between re-fetching top N and redrawing
+}</code></pre>
+
+<h3>12.1 Required Studio structure <span class="badge badge-studio">STUDIO</span></h3>
+<table class="kv">
+  <tr><td>Level board</td><td class="path">Workspace/Functional/GlobalLeaderboards/Level/LevelLeaderboard</td></tr>
+  <tr><td>Wins board</td><td class="path">Workspace/Functional/GlobalLeaderboards/Wins/WinsLeaderboard</td></tr>
+  <tr><td>Time Played board</td><td class="path">Workspace/Functional/GlobalLeaderboards/TimePlayed/GuiPart</td></tr>
+</table>
+<p>Each board Part needs a <code>SurfaceGui</code> containing a <code>ScrollingFrame</code> with a <code>UIGridLayout</code> whose <code>Template</code> row has <code>TextLabel</code> (rank), <code>PlayerName</code>, and <code>AmountofCash</code> children — copy an existing board's structure exactly when placing a new one. Ranking uses a real cross-server <code>OrderedDataStore</code> per board (via <code>DataStoreService</code>, Chapter 2), so results are accurate across every live server, not just the one a player happens to be on. Lower the two interval numbers for a more "live-feeling" board at the cost of more DataStore calls (Roblox rate-limits these — don't drop far below the shipped defaults with a large player base).</p>
+
+</section>
+
+<!-- ============ 13. ADMIN ============ -->
+<section>
+<h2 id="s13">13. Giving Yourself Admin Access</h2>
 
 <div class="box step-goal">Unlock the in-game Admin Panel (press P) for yourself, so you can broadcast announcements and grant temporary server-wide boosts while testing or running events.</div>
 
@@ -329,32 +549,73 @@ ThirdOption  = 0.12  -- 12%</code></pre>
   <tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/AdminConfig</td></tr>
 </table>
 
-<pre><code>WHITELIST_ACTIVE = false,   -- true = only whitelisted players see the Admin Panel
+<pre><code>local AdminConfig = {}
 
-Whitelist = {
-    10454577227, -- example entry
-},</code></pre>
+AdminConfig.WHITELIST_ACTIVE = false   -- true = only whitelisted players see the Admin Panel
+AdminConfig.Whitelist = {
+    4176117504 -- Put your id here
+}
+
+function AdminConfig.IsWhitelisted(player)
+    return table.find(AdminConfig.Whitelist, player.UserId) ~= nil
+end
+
+return AdminConfig</code></pre>
 
 <ol>
-  <li><b>(Website)</b> Find your numeric Roblox User ID: open your own Roblox profile page — the number in the URL (<code>roblox.com/users/<b>10454577227</b>/profile</code>) is your User ID.</li>
+  <li><b>(Website)</b> Find your numeric Roblox User ID: open your own Roblox profile page — the number in the URL (<code>roblox.com/users/<b>4176117504</b>/profile</code>) is your User ID.</li>
   <li><b>(Script)</b> Add a new line inside the <code>Whitelist = { ... }</code> list with your User ID, e.g.:
-    <pre><code>Whitelist = {
-    10454577227,
+    <pre><code>AdminConfig.Whitelist = {
+    4176117504,
     YOUR_USER_ID_HERE,
-},</code></pre>
+}</code></pre>
   </li>
-  <li>Set <code>WHITELIST_ACTIVE = true</code> once you're ready to restrict the panel to only whitelisted players. Leave it <code>false</code> during your own testing if you want anyone to be able to open it.</li>
+  <li>Set <code>AdminConfig.WHITELIST_ACTIVE = true</code> once you're ready to restrict the panel to only whitelisted players. Leave it <code>false</code> during your own testing if you want anyone to be able to open it.</li>
 </ol>
 
 <div class="box warn">Always set <code>WHITELIST_ACTIVE = true</code> before your public launch — otherwise every player can open the Admin Panel and grant themselves boosts.</div>
 
-<p>In-game: press <b>P</b> to open the Admin Panel once whitelisted.</p>
+<p>In-game: press <b>P</b> to open the Admin Panel once whitelisted. It currently exposes four actions, each broadcast instantly to every live server (not just yours):</p>
+<table>
+  <tr><th>Action</th><th>What it does</th></tr>
+  <tr><td>Set Shrink Multiplier</td><td>Server-wide temporary Shrink-gain multiplier, for a set duration (seconds).</td></tr>
+  <tr><td>Set Wins Multiplier</td><td>Server-wide temporary Wins multiplier, for a set duration (seconds).</td></tr>
+  <tr><td>Spawn Event Treadmill</td><td>Spawns a named treadmill from <span class="path">ReplicatedStorage/Shared/Assets/EventTreadmills</span> (Chapter 10.3) for a set duration.</td></tr>
+  <tr><td>Announce</td><td>Broadcasts a chat/UI announcement to every player on every server, attributed to your name.</td></tr>
+</table>
 
 </section>
 
-<!-- ============ 7. TRAILS ============ -->
+<!-- ============ 14. TAG REFERENCE ============ -->
 <section>
-<h2 id="s7">7. Adding a New Trail</h2>
+<h2 id="s14">14. Level-Design Building Blocks — Tag Reference</h2>
+<div class="box step-goal">A cheat sheet of every CollectionService tag this game reacts to, so you can build a brand-new stage entirely inside Studio without touching a single script.</div>
+
+<p>Apply tags using Studio's built-in <b>Tag Editor</b> plugin (Toolbox → search "Tag Editor", or <b>Model → Tag Editor</b> depending on your Studio version): select a Part, open the plugin, type the tag name, click Add.</p>
+
+<table>
+<tr><th>Tag</th><th>Where it goes</th><th>What it does</th></tr>
+<tr><td><code>WinHitbox</code></td><td>A win-pad Part, with <code>Stage</code> and <code>World</code> Number attributes set</td><td>Touching it grants that stage's Wins (Chapter 9.1). Add a <code>RequireRobux</code> Boolean attribute to make it a paid 2× pad instead.</td></tr>
+<tr><td><code>StageGate</code></td><td>A barrier Part, named to match a stage number key</td><td>Blocks movement until the player's Level clears that stage's requirement for their current world (Chapter 8).</td></tr>
+<tr><td><code>BaseXpOptionPart</code></td><td>A press-multiplier stand Part, with a <code>World</code> attribute, named <code>"1"</code>-<code>"8"</code></td><td>Touching it equips that Shrink-per-press tier if the player can afford it (Chapter 9.6).</td></tr>
+<tr><td><code>GenerateKeycapsSurface</code></td><td>A flat Part covering the area you want tiled with keycaps</td><td>Auto-generates a grid of pressable keycaps across the surface at game start — see 14.5 below.</td></tr>
+</table>
+<p class="small">Note: <code>Treadmill</code> and <code>EventTreadmill</code> tags (Chapter 10) are applied automatically by the game at startup to everything already parented under <span class="path">Workspace/Functional/Treadmills</span> — you never need to hand-tag those.</p>
+
+<h3>14.5 Building a new keycap surface (the core "keyboard" gameplay) <span class="badge badge-studio">STUDIO</span></h3>
+<ol>
+  <li>Build a flat Part sized to cover the floor area you want tiled with keycaps.</li>
+  <li>Tag it <code>GenerateKeycapsSurface</code>.</li>
+  <li>Add a <code>KeycapSet</code> String attribute naming a folder under <span class="path">ReplicatedStorage/Shared/Assets/Keycaps</span> (each such folder is a themed set of keycap Models to randomly pick from while filling the grid).</li>
+  <li>Optionally add a <code>KeycapSizeMulti</code> Number attribute (defaults to 1) to scale every generated keycap up or down — useful for matching a stage's visual scale.</li>
+</ol>
+<p>At game start, the surface is automatically divided into a grid sized to fit as many keycaps as will comfortably tile it, each cloned from a random Model in the chosen set, stamped with a random letter decal, and tagged <code>Keycap</code> so the press-detection system picks it up — nothing else needs to be built or wired by hand.</p>
+
+</section>
+
+<!-- ============ 15. TRAILS ============ -->
+<section>
+<h2 id="s15">15. Adding a New Trail</h2>
 
 <div class="box step-goal">Add a brand-new equippable trail cosmetic that players can buy with Wins (in-game currency) and, optionally, Robux.</div>
 
@@ -365,18 +626,18 @@ Whitelist = {
   <li>In the Explorer, go to <span class="path">ReplicatedStorage/Shared/Assets/Trails</span>.</li>
   <li>Right-click an existing trail folder (e.g. <code>Green</code>) → <b>Duplicate</b>.</li>
   <li>Rename the duplicate to your new id, e.g. <code>Orange</code>.</li>
-  <li>Inside it you'll find two <code>Attachment</code> instances named <code>Attachment0</code> and <code>Attachment1</code>, and a <code>Trail</code> instance named <code>TrailEffect</code>. <b>Keep these three names exactly as they are</b> — only change cosmetic properties like the Trail's <code>Color</code> or <code>Texture</code>.</li>
+  <li>Inside it you'll find two <code>Attachment</code> instances named <code>Attachment0</code> and <code>Attachment1</code>, and a <code>Trail</code> instance named <code>TrailEffect</code>. <b>Keep these three names exactly as they are</b> — only change cosmetic properties like the Trail's <code>Color</code> or <code>Texture</code>. Their positions are recalculated automatically to fit whatever size the wearer currently is (Chapter 6), so you don't need to reposition them for different character scales.</li>
 </ol>
 
 <h3>Step 2 — Add the config entry <span class="badge badge-code">SCRIPT</span></h3>
 <table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/TrailsConfig</td></tr></table>
 <pre><code>TrailsConfig.Items = {
-    Green  = { Name = "Green Trail",  WinsCost = 300,   Multiplier = 1.5, Color = Color3.fromRGB(60, 220, 90) },
+    Green  = { Name = "Green Trail",  WinsCost = 500,   Multiplier = 1.5, WalkSpeed = 30, Color = Color3.fromRGB(60, 220, 90) },
     -- ... existing entries ...
 
-    Orange = { Name = "Orange Trail", WinsCost = 25000, Multiplier = 4.5, Color = Color3.fromRGB(255, 140, 0) },
+    Orange = { Name = "Orange Trail", WinsCost = 100_000_000, Multiplier = 6, WalkSpeed = 55, Color = Color3.fromRGB(255, 140, 0) },
 }</code></pre>
-<p>The key (<code>Orange</code>) must exactly match the Studio folder name from Step 1. <code>WinsCost</code> is the in-game currency price; <code>Multiplier</code> is how much it boosts XP-per-press while equipped; <code>Color</code> is only used for the UI swatch.</p>
+<p>The key (<code>Orange</code>) must exactly match the Studio folder name from Step 1. <code>WinsCost</code> is the in-game currency price; <code>Multiplier</code> is how much it boosts Shrink XP per press while equipped (Chapter 5.2); <code>WalkSpeed</code> is the flat <code>Humanoid.WalkSpeed</code> the player gets while it's equipped (Chapter 9.5); <code>Color</code> is only used for the UI swatch.</p>
 
 <h3>Step 3 — (Optional) allow buying it with Robux <span class="badge badge-code">SCRIPT</span></h3>
 <p>Create a Developer Product for it (see Chapter 4 — not a Game Pass), then add it under <code>GamePasses.Trails</code> in <span class="path">ReplicatedStorage/Shared/Configs/MonetizationConfig</span> using the same id:</p>
@@ -389,9 +650,9 @@ Whitelist = {
 
 </section>
 
-<!-- ============ 8. AURAS ============ -->
+<!-- ============ 16. AURAS ============ -->
 <section>
-<h2 id="s8">8. Adding a New Aura</h2>
+<h2 id="s16">16. Adding a New Aura</h2>
 
 <div class="box step-goal">Add a brand-new equippable full-body particle aura, following the same id-matching pattern as Trails.</div>
 
@@ -400,16 +661,16 @@ Whitelist = {
   <li>Go to <span class="path">ReplicatedStorage/Shared/Assets/Auras</span>.</li>
   <li>Duplicate an existing aura (e.g. <code>Blue</code>) and rename it to your new id, e.g. <code>Orange</code>.</li>
 </ol>
-<div class="box warn">Each Aura template must be a <b>Part</b> containing a <b>ParticleEmitter</b> — not a bare ParticleEmitter on its own. When equipped, the game automatically resizes and repositions this Part to cover the wearer's whole body, and the ParticleEmitter fills that volume. Duplicating an existing Aura keeps this working correctly automatically — just make sure you duplicate the whole Part (not just the ParticleEmitter inside it).</div>
+<div class="box warn">Each Aura template must be a <b>Part</b> containing a <b>ParticleEmitter</b> — not a bare ParticleEmitter on its own. When equipped, the game automatically resizes and repositions this Part to cover the wearer's whole body based on their <i>current</i> character size (Chapter 6), and the ParticleEmitter fills that volume. Duplicating an existing Aura keeps this working correctly automatically — just make sure you duplicate the whole Part (not just the ParticleEmitter inside it).</div>
 <p>On the ParticleEmitter inside your duplicated Part, freely change <b>Color</b>, <b>Texture</b>, and <b>Rate</b> to design your look — but leave <b>Shape</b> (Box), <b>ShapeStyle</b> (Volume), and <b>LockedToPart</b> (On) exactly as they are, or the full-body coverage will break.</p>
 
 <h3>Step 2 — Add the config entry <span class="badge badge-code">SCRIPT</span></h3>
 <table class="kv"><tr><td>Script to edit</td><td class="path">ReplicatedStorage/Shared/Configs/AurasConfig</td></tr></table>
 <pre><code>AurasConfig.Items = {
-    Purple = { Name = "Purple Aura", WinsCost = 400, Multiplier = 1.2, Color = Color3.fromRGB(170, 80, 255) },
+    Purple = { Name = "Purple Aura", WinsCost = 15_000, Multiplier = 2, Color = Color3.fromRGB(170, 80, 255) },
     -- ... existing entries ...
 
-    Orange = { Name = "Orange Aura", WinsCost = 50000, Multiplier = 4.5, Color = Color3.fromRGB(255, 140, 0) },
+    Orange = { Name = "Orange Aura", WinsCost = 500_000_000_000, Multiplier = 12, Color = Color3.fromRGB(255, 140, 0) },
 }</code></pre>
 
 <h3>Step 3 — (Optional) allow buying it with Robux <span class="badge badge-code">SCRIPT</span></h3>
@@ -417,51 +678,20 @@ Whitelist = {
 
 </section>
 
-<!-- ============ 9. OBSTACLES ============ -->
+<!-- ============ 17. CHECKLIST ============ -->
 <section>
-<h2 id="s9">9. Adding a New Obstacle</h2>
-
-<div class="box step-goal">Add a new moving hazard to a stage. This is the one content type that needs zero script edits — it's entirely done inside Studio.</div>
-
-<h3>Step 1 — Build the hazard model <span class="badge badge-studio">STUDIO</span></h3>
-<ol>
-  <li>Under <span class="path">ReplicatedStorage/Shared/Assets/Obstacles</span>, add a new Model containing your hazard's parts, e.g. name it <code>SpikeWall</code>.</li>
-  <li>Make sure it has a <code>PrimaryPart</code> set (or at least one regular Part inside it).</li>
-</ol>
-
-<h3>Step 2 — Create its movement lane <span class="badge badge-studio">STUDIO</span></h3>
-<ol>
-  <li>Under <span class="path">Workspace/Functional/ObstaclePaths</span>, add a new <b>Folder</b> — this represents one obstacle "lane."</li>
-  <li>Inside that Folder, add two Parts named exactly <code>StartCFrame</code> and <code>EndCFrame</code> — these mark where the obstacle starts and ends its movement. (Optionally add a third, <code>MidCFrame</code>, for a 3-point path.)</li>
-  <li>On the Folder itself, add these <b>Attributes</b> (Properties panel → Attributes → +):</li>
-</ol>
-<table>
-  <tr><th>Attribute</th><th>Type</th><th>Meaning</th></tr>
-  <tr><td><code>ModelName</code></td><td>String</td><td>Must exactly match the Model name from Step 1, e.g. <code>"SpikeWall"</code>.</td></tr>
-  <tr><td><code>SpawnRate</code></td><td>Number</td><td>Seconds between each spawn of this obstacle.</td></tr>
-  <tr><td><code>Speed</code></td><td>Number</td><td>Studs per second it travels along the lane.</td></tr>
-  <tr><td><code>Stage</code></td><td>Number (optional)</td><td>Which stage this belongs to, for death/revive banners.</td></tr>
-  <tr><td><code>Reverse</code></td><td>Boolean (optional)</td><td>Reverses the direction of travel.</td></tr>
-  <tr><td><code>FirstPathSpeed</code></td><td>Number (optional)</td><td>Only used if you added a <code>MidCFrame</code> — speed for the first leg of the path.</td></tr>
-</table>
-
-<div class="box tip">That's the whole process — no script needs to be touched. The game automatically discovers every Folder under <code>ObstaclePaths</code> and starts spawning that obstacle.</div>
-
-</section>
-
-<!-- ============ 10. CHECKLIST ============ -->
-<section>
-<h2 id="s10">10. Pre-Publish Checklist</h2>
+<h2 id="s17">17. Pre-Publish Checklist</h2>
 <p>Work through this list before you make the game public.</p>
 <ul class="checklist">
   <li>Place saved under your own Roblox group (Chapter 1), and opens with no red errors in the Output window.</li>
   <li><b>Game Settings → Security → Enable Studio Access to API Services</b> is turned on.</li>
   <li><code>GroupRewardsConfig.GroupId</code> points at your own group (Chapter 3).</li>
   <li>Every ID in <code>MonetizationConfig</code> has been replaced with a Developer Product you created in your own game (Chapter 4) — none are left as the template author's original numbers, and none were created as Game Passes.</li>
-  <li>Balance values (Chapter 5) reviewed and adjusted to your liking — the shipped defaults are a reasonable starting point, not a requirement.</li>
-  <li>Your own User ID is in <code>AdminConfig.Whitelist</code>, and <code>WHITELIST_ACTIVE</code> is set to <code>true</code> (Chapter 6).</li>
-  <li>Any new Trails/Auras/Obstacles you've added show up correctly and are equip/purchase-tested with a second test account (cosmetics equipped by one account shouldn't appear on another's screen incorrectly).</li>
-  <li>Play-tested a full loop end-to-end: earn Wins → buy a cosmetic → rebirth → teleport to a later stage → open the Admin Panel (if whitelisted) → confirm the global leaderboards populate after a minute or two.</li>
+  <li>Balance values (Chapters 6, 7, 8, 9) reviewed and adjusted to your liking — the shipped defaults, especially World 2/3's placeholder economy numbers, are a starting point, not a finished balance pass.</li>
+  <li>All required Studio Explorer structure exists: per-world <code>SpawnLocation</code>s (Chapter 9.1/Chapter 7.2), <code>AutoWinsStart</code> and per-world Stage <code>Wins</code> folders (Chapter 11.2), the three <code>GlobalLeaderboards</code> boards (Chapter 12.1), and every <code>StageGate</code>-tagged Part has a matching config entry (Chapter 8).</li>
+  <li>Your own User ID is in <code>AdminConfig.Whitelist</code>, and <code>WHITELIST_ACTIVE</code> is set to <code>true</code> (Chapter 13).</li>
+  <li>Any new Trails/Auras/stages you've added show up correctly and are equip/purchase-tested with a second test account (cosmetics equipped by one account shouldn't appear on another's screen incorrectly).</li>
+  <li>Play-tested a full loop end-to-end: press keycaps → level up and watch the character shrink → earn Wins → buy a cosmetic → rebirth → unlock and teleport to World 2 → teleport to a later stage → toggle Auto Wins → open the Admin Panel (if whitelisted) → confirm the global leaderboards populate after a minute or two.</li>
 </ul>
 
 <div class="box tip">Keep this guide — every chapter above maps to exactly one Explorer location, so you can return to it any time you want to add more content or retune the economy.</div>

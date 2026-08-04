@@ -1,9 +1,13 @@
-return {
-	-- When false, the admin panel/actions are open to every player - no
-	-- whitelist check at all. Flip to true before shipping.
-	WHITELIST_ACTIVE = false,
+local AdminConfig = {}
 
-	Whitelist = {
-		10454577227, -- VoranoxHoldings (test account) - for verification, adjust as needed
-	},
+AdminConfig.WHITELIST_ACTIVE = false
+AdminConfig.Whitelist = {
+	4176117504 -- Put your id here
 }
+
+function AdminConfig.IsWhitelisted(player)
+	return table.find(AdminConfig.Whitelist, player.UserId) ~= nil
+end
+
+
+return AdminConfig

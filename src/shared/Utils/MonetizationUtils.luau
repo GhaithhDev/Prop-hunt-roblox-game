@@ -1,3 +1,4 @@
+local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MonetizationConfig = require(ReplicatedStorage.Shared.Configs.MonetizationConfig)
@@ -32,6 +33,15 @@ function MonetizationUtils.GetNameFromId(id: number): string?
 	end
 
 	return nil
+end
+
+function MonetizationUtils.GetProductPriceInRobux(productId: number) : number | nil
+	local ok, info = pcall(function()
+		return MarketplaceService:GetProductInfo(productId, Enum.InfoType.Product)
+	end)
+	if ok and info and info.PriceInRobux then
+		return info.PriceInRobux
+	end
 end
 
 return MonetizationUtils
