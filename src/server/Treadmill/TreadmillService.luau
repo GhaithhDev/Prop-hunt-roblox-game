@@ -28,9 +28,12 @@ local GATE_NOTIFY_DEBOUNCE = 3 -- seconds between repeat notify+prompt for the s
 local TreadmillService = {}
 
 local playerTreadmillsFolder: Folder
-local eventTreadmillFolder: Folder
-local eventTreadmillSpawnPart: BasePart
-local currentEventTreadmill: Model?
+-- Keyed by world number (1/2/3) - each world spawns/tracks its own event
+-- treadmill independently, same convention as UFOEventService's per-world
+-- ufoFolder/activeUFOs.
+local eventTreadmillFolder: { [number]: Folder } = {}
+local eventTreadmillSpawnPart: { [number]: BasePart } = {}
+local currentEventTreadmill: { [number]: Model? } = {}
 local ownedTreadmills: { [Player]: Model } = {}
 local runAnimTracks: { [Player]: AnimationTrack } = {}
 local trackedCharacter: { [Player]: Model } = {}
@@ -414,8 +417,22 @@ function TreadmillService.GetMultiplierForPlayer(player: Player): number
 	return standingMultiplier[player] or 1
 end
 
--- Only one spawn point exists, so a new spawn replaces whatever event
--- treadmill is currently active rather than stacking/overlapping with it.
+-- World1 keeps using the original unprefixed Functional path; World2/3 live
+-- under their own top-level world root folders - same convention as
+-- AutoWinsService.GetStagesRoot/WinsService.GetSpawnPosition/
+-- UFOEventService.GetUFOEventRoot.
+local function GetTreadmillFunctionalRoot(world: number): Instance
+	if world == 1 then
+		return workspace.Functional
+	end
+	local worldRoot = workspace:FindFirstChild("World" .. world)
+	return (worldRoot and worldRoot:FindFirstChild("Functional")) or workspace.Functional
+end
+
+-- Only one spawn point exists per world, so a new spawn replaces whatever
+-- event treadmill is currently active in that world rather than stacking/
+-- overlapping with it. Spawns into all 3 worlds at once so an admin-triggered
+-- event treadmill is available everywhere, not just World 1's hub.
 function TreadmillService.SpawnEventTreadmill(name: string, duration: number)
 	local lowerName = name:lower()
 	local template: Model? = nil
@@ -431,24 +448,38 @@ function TreadmillService.SpawnEventTreadmill(name: string, duration: number)
 		return
 	end
 
-	if currentEventTreadmill then
-		currentEventTreadmill:Destroy()
-		currentEventTreadmill = nil
-	end
-
-	local clone = template:Clone()
-	clone:PivotTo(eventTreadmillSpawnPart.CFrame)
-	CollectionService:AddTag(clone, Tags.EVENT_TREADMILL)
-	clone.Parent = eventTreadmillFolder
-
-	currentEventTreadmill = clone
-
-	task.delay(duration, function()
-		if currentEventTreadmill == clone then
-			currentEventTreadmill = nil
-			clone:Destroy()
+	for world = 1, 3 do
+		local spawnPart = eventTreadmillSpawnPart[world]
+		local folder = eventTreadmillFolder[world]
+		if not spawnPart or not folder then
+			warn(`TreadmillService: no EventTreadmillSpawnCFrame for world {world} - skipping event treadmill there`)
+			continue
 		end
-	end)
+
+		local existing = currentEventTreadmill[world]
+		if existing then
+			existing:Destroy()
+			currentEventTreadmill[world] = nil
+		end
+
+		local clone = template:Clone()
+		clone:PivotTo(spawnPart.CFrame)
+		-- GetServerTimeNow() (not os.time()) so the client's countdown display
+		-- (TreadmillController) can't drift from a client machine's own clock
+		-- being wrong - same synchronized-clock convention ReplicatedTween uses.
+		clone:SetAttribute("ExpiresAt", workspace:GetServerTimeNow() + duration)
+		CollectionService:AddTag(clone, Tags.EVENT_TREADMILL)
+		clone.Parent = folder
+
+		currentEventTreadmill[world] = clone
+
+		task.delay(duration, function()
+			if currentEventTreadmill[world] == clone then
+				currentEventTreadmill[world] = nil
+				clone:Destroy()
+			end
+		end)
+	end
 end
 
 function TreadmillService.Start()
@@ -465,12 +496,29 @@ function TreadmillService.Start()
 		playerTreadmillsFolder.Parent = workspace.Functional
 	end
 
-	eventTreadmillSpawnPart = workspace.Functional:WaitForChild("EventTreadmillSpawnCFrame")
-	eventTreadmillFolder = workspace.Functional:FindFirstChild("EventTreadmills")
-	if not eventTreadmillFolder then
-		eventTreadmillFolder = Instance.new("Folder")
-		eventTreadmillFolder.Name = "EventTreadmills"
-		eventTreadmillFolder.Parent = workspace.Functional
+	for world = 1, 3 do
+		local functionalRoot = GetTreadmillFunctionalRoot(world)
+
+		-- World1's EventTreadmillSpawnCFrame is a guaranteed part of the base
+		-- template (matches the original unconditional WaitForChild here);
+		-- World2/3 may not have theirs built yet, so wait briefly rather than
+		-- yielding forever and blocking the rest of Start() (the ToggleSpawn
+		-- remote hookup, PlayerRemoving cleanup, and the XP tick loop below).
+		local spawnPart = if world == 1
+			then functionalRoot:WaitForChild("EventTreadmillSpawnCFrame")
+			else functionalRoot:WaitForChild("EventTreadmillSpawnCFrame", 5)
+		if not spawnPart then
+			warn(`TreadmillService: no EventTreadmillSpawnCFrame found for world {world} - event treadmills won't spawn there until it's added`)
+		end
+		eventTreadmillSpawnPart[world] = spawnPart
+
+		local folder = functionalRoot:FindFirstChild("EventTreadmills")
+		if not folder then
+			folder = Instance.new("Folder")
+			folder.Name = "EventTreadmills"
+			folder.Parent = functionalRoot
+		end
+		eventTreadmillFolder[world] = folder
 	end
 
 	Net:Connect("ToggleSpawn", onToggleSpawn)
