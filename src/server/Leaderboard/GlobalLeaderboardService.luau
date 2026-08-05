@@ -1,7 +1,9 @@
 --[[
 	GlobalLeaderboardService
 
-	Populates the three world signboards under Workspace.Functional.GlobalLeaderboards
+	Populates the Level/Wins/TimePlayed signboards under each world's
+	GlobalLeaderboards folder (Workspace.Functional.GlobalLeaderboards for
+	world 1, Workspace.WorldN.Functional.GlobalLeaderboards for worlds 2-3)
 	directly (they're Workspace instances, not per-player StarterGui, so normal
 	replication shows the result to everyone - no remotes/client controller needed).
 
@@ -38,24 +40,40 @@ local function formatPlayTime(totalSeconds: number): string
 	return `{minutes}m`
 end
 
-local boards = {
-	{
-		Store = DataStoreService:GetOrderedDataStore("GlobalLevelLeaderboard"),
-		BoardPart = workspace.Functional.GlobalLeaderboards.Level.LevelLeaderboard,
-		DataKey = "Level",
-	},
-	{
-		Store = DataStoreService:GetOrderedDataStore("GlobalWinsLeaderboard"),
-		BoardPart = workspace.Functional.GlobalLeaderboards.Wins.WinsLeaderboard,
-		DataKey = "Wins",
-	},
-	{
-		Store = DataStoreService:GetOrderedDataStore("GlobalTimePlayedLeaderboard"),
-		BoardPart = workspace.Functional.GlobalLeaderboards.TimePlayed.GuiPart,
-		DataKey = "TimePlayed",
-		Format = formatPlayTime,
-	},
+-- Same convention as TreadmillService.GetTreadmillFunctionalRoot/
+-- AutoWinsService.GetStagesRoot/WinsService.GetSpawnPosition/
+-- UFOEventService.GetUFOEventRoot.
+local function GetLeaderboardFunctionalRoot(world: number): Instance
+	if world == 1 then
+		return workspace.Functional
+	end
+	local worldRoot = workspace:FindFirstChild("World" .. world)
+	return (worldRoot and worldRoot:FindFirstChild("Functional")) or workspace.Functional
+end
+
+-- Each stat has a single cross-server OrderedDataStore; the same ranking is
+-- rendered onto every world's copy of the signboard, so each entry here can
+-- expand into up to 3 board entries (one per world) sharing one Store.
+local boardDefs = {
+	{ Store = DataStoreService:GetOrderedDataStore("GlobalLevelLeaderboard"), SubPath = { "Level", "LevelLeaderboard" }, DataKey = "Level" },
+	{ Store = DataStoreService:GetOrderedDataStore("GlobalWinsLeaderboard"), SubPath = { "Wins", "WinsLeaderboard" }, DataKey = "Wins" },
+	{ Store = DataStoreService:GetOrderedDataStore("GlobalTimePlayedLeaderboard"), SubPath = { "TimePlayed", "GuiPart" }, DataKey = "TimePlayed", Format = formatPlayTime },
 }
+
+local boards = {}
+for _, def in boardDefs do
+	for world = 1, 3 do
+		local part: Instance? = GetLeaderboardFunctionalRoot(world):FindFirstChild("GlobalLeaderboards")
+		for _, segment in def.SubPath do
+			part = part and part:FindFirstChild(segment)
+		end
+		if part then
+			table.insert(boards, { Store = def.Store, BoardPart = part, DataKey = def.DataKey, Format = def.Format })
+		else
+			warn(`GlobalLeaderboardService: missing {table.concat(def.SubPath, "/")} board for world {world}`)
+		end
+	end
+end
 
 local lastSyncedValue: { [Player]: { [string]: number } } = {}
 local nameCache: { [number]: string } = {}

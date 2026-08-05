@@ -9,7 +9,7 @@ local PressXpService = require(ServerScriptService.Server.PressXp.PressXpService
 local InventoryService = require(ServerScriptService.Server.Inventory.InventoryService)
 
 local Players = game:GetService("Players")
-local Key = RunService:IsStudio() and "Studio_Store_40" or "Test_Store_40"
+local Key = RunService:IsStudio() and "Studio_Store_100" or "Test_Store_100"
 
 local PlayerStore = ProfileStore.New(Key, PROFILE_TEMPLATE)
 

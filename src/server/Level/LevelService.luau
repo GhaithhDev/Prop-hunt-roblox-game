@@ -8,13 +8,21 @@ local ShrinkService = require(ServerScriptService.Server.Shrink.ShrinkService)
 
 local LevelService = {}
 
+local MAX_LEVEL_UPS_PER_CALL = 2000
+
 function LevelService.CheckLevelUp(player: Player)
 	local currentLevel = DataManager.Get(player, "Level") or 1
 	local currentShrink = DataManager.Get(player, "Shrink") or 0
 	local newLevel = currentLevel
+	local iterations = 0
 
 	while currentShrink >= LevelConfig.GetXpRequiredForLevel(newLevel + 1) do
 		newLevel += 1
+		iterations += 1
+		if iterations >= MAX_LEVEL_UPS_PER_CALL then
+			warn(("LevelService.CheckLevelUp: hit iteration cap for %s at level %d"):format(player.Name, newLevel))
+			break
+		end
 	end
 
 	if newLevel ~= currentLevel then

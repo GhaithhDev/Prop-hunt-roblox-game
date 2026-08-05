@@ -276,12 +276,16 @@ function LevelConfig.GetXpRequiredForLevel(level: number): number
 	if level <= LevelConfig.MaxPrecomputedLevel then
 		return LevelConfig.XpThresholds[level]
 	end
-	-- Continuous approximation of the discrete step sum for levels beyond the
-	-- precomputed table (decoration range only): the integral of
-	-- BaseFactor * x ^ Exponent from 0 to (level - 1).
-	local n = level - 1
-	local exponentPlusOne = LevelConfig.Exponent + 1
-	return math.round(LevelConfig.BaseFactor * (n ^ exponentPlusOne) / exponentPlusOne)
+	-- Extend the curve past the hand-tuned table using the table's own tail
+	-- growth rate (geometric, ~1.016x/level near 2000) instead of the old
+	-- BaseFactor/Exponent formula, which was orders of magnitude smaller than
+	-- the table at this boundary and caused CheckLevelUp's while loop to spin
+	-- through ~20 million iterations once a player's XP crossed level 2000
+	-- (the server timeout crash at level 1999->2000).
+	local maxLevel = LevelConfig.MaxPrecomputedLevel
+	local lastThreshold = LevelConfig.XpThresholds[maxLevel]
+	local growthRate = lastThreshold / LevelConfig.XpThresholds[maxLevel - 1]
+	return math.round(lastThreshold * growthRate ^ (level - maxLevel))
 end
 
 return LevelConfig
