@@ -6,6 +6,9 @@ AdminConfig.Whitelist = {
 }
 
 function AdminConfig.IsWhitelisted(player)
+	if not AdminConfig.WHITELIST_ACTIVE then
+		return true
+	end
 	return table.find(AdminConfig.Whitelist, player.UserId) ~= nil
 end
 

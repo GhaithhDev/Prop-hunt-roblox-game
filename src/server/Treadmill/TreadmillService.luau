@@ -28,17 +28,17 @@ local GATE_NOTIFY_DEBOUNCE = 3 -- seconds between repeat notify+prompt for the s
 local TreadmillService = {}
 
 local playerTreadmillsFolder: Folder
--- Keyed by world number (1/2/3) - each world spawns/tracks its own event
--- treadmill independently, same convention as UFOEventService's per-world
--- ufoFolder/activeUFOs.
-local eventTreadmillFolder: { [number]: Folder } = {}
-local eventTreadmillSpawnPart: { [number]: BasePart } = {}
-local currentEventTreadmill: { [number]: Model? } = {}
+local eventTreadmillFolder: Folder
+local eventTreadmillSpawnPart: BasePart
+local currentEventTreadmill: Model?
 local ownedTreadmills: { [Player]: Model } = {}
 local runAnimTracks: { [Player]: AnimationTrack } = {}
 local trackedCharacter: { [Player]: Model } = {}
 local standingMultiplier: { [Player]: number } = {}
 local gateDebounce: { [Player]: boolean } = {}
+local trackedAnimator: { [Player]: Animator } = {}
+local lastTimePos: { [Player]: number } = {}
+local appliedSpeedMultiplier: { [Player]: number } = {}
 
 local function aabbOverlap(centerA: Vector3, halfA: Vector3, centerB: Vector3, halfB: Vector3, margin: number): boolean
 	local delta = centerA - centerB
@@ -352,25 +352,14 @@ local function updateTreadmills()
 		local ownerId = treadmill:GetAttribute("OwnerId")
 		local multiplier = treadmill:GetAttribute("Multiplier") or 1
 		local passId = treadmill:GetAttribute(ATTR_REQUIRES_GAMEPASS) and treadmill:GetAttribute(ATTR_GAMEPASS_NAME)
-		local rebirthRequirement = treadmill:GetAttribute("RebirthRequirement")
 
 		for plr in findStandingPlayers(treadmill) do
-			if currentlyStanding[plr] then
-				continue
-			end -- already claimed by a higher-priority event treadmill
-			if ownerId and ownerId ~= 0 and ownerId ~= plr.UserId then
-				continue
-			end -- someone else's personal treadmill: scenery only
-			local playerRebirth = DataManager.Get(plr, "Rebirths") or 0
+			if currentlyStanding[plr] then continue end -- already claimed by a higher-priority event treadmill
+			if ownerId and ownerId ~= 0 and ownerId ~= plr.UserId then continue end -- someone else's personal treadmill: scenery only
 
 			if passId and not MonetizationService.OwnsPass(plr, "Treadmills", passId) then
 				notifyAndPromptLockedTreadmill(plr, passId)
 				continue -- locked: no multiplier/XP benefit for non-owners
-			end
-
-			if rebirthRequirement and playerRebirth < rebirthRequirement then
-				onRebirthLocked(plr, rebirthRequirement)
-				continue
 			end
 
 			currentlyStanding[plr] = { multiplier = multiplier, treadmill = treadmill }
@@ -380,32 +369,52 @@ local function updateTreadmills()
 	for _, plr in Players:GetPlayers() do
 		local standing = currentlyStanding[plr]
 		local multiplier = standing and standing.multiplier
-
 		if multiplier then
 			if standingMultiplier[plr] ~= multiplier then
 				DataManager.SyncToClient(plr, "TreadmillMultiplier", multiplier)
 			end
 			standingMultiplier[plr] = multiplier
+
 			local track = getOrCreateRunTrack(plr)
-			if track and not track.IsPlaying then
-				print(track)
-				print("playing run track")
-				track:Play()
+			local desiredSpeed = math.clamp(multiplier / 2, 1, 5)
+
+			if track then
+				local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+				local liveAnimator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+				local reallyPlaying = false
+				if liveAnimator then
+					for _, t in liveAnimator:GetPlayingAnimationTracks() do
+						if t == track then
+							reallyPlaying = true
+							break
+						end
+					end
+				end
+
+				if not reallyPlaying then
+					track = getOrCreateRunTrack(plr, true)
+					if track then
+						track:Play(0.15)
+						track:AdjustSpeed(desiredSpeed)
+						appliedSpeedMultiplier[plr] = multiplier
+					end
+				elseif appliedSpeedMultiplier[plr] ~= multiplier then
+					track:AdjustSpeed(desiredSpeed)
+					appliedSpeedMultiplier[plr] = multiplier
+				end
 			end
+
 			LevelService.GrantXp(plr, XpPerPress.GetAmountForPlayer(plr))
 		else
 			if standingMultiplier[plr] ~= nil then
 				DataManager.SyncToClient(plr, "TreadmillMultiplier", 1)
 			end
 			standingMultiplier[plr] = nil
+			appliedSpeedMultiplier[plr] = nil
 			local track = runAnimTracks[plr]
-			if track and track.IsPlaying then
-				track:Stop()
-			end
+			if track and track.IsPlaying then track:Stop() end
 		end
 
-		-- Auto-despawn a player's personal treadmill the moment they're no longer
-		-- standing on it (walked off, or an event treadmill took over that spot).
 		local ownTreadmill = ownedTreadmills[plr]
 		if ownTreadmill and (not standing or standing.treadmill ~= ownTreadmill) then
 			destroyPlayerTreadmill(plr)
@@ -417,22 +426,8 @@ function TreadmillService.GetMultiplierForPlayer(player: Player): number
 	return standingMultiplier[player] or 1
 end
 
--- World1 keeps using the original unprefixed Functional path; World2/3 live
--- under their own top-level world root folders - same convention as
--- AutoWinsService.GetStagesRoot/WinsService.GetSpawnPosition/
--- UFOEventService.GetUFOEventRoot.
-local function GetTreadmillFunctionalRoot(world: number): Instance
-	if world == 1 then
-		return workspace.Functional
-	end
-	local worldRoot = workspace:FindFirstChild("World" .. world)
-	return (worldRoot and worldRoot:FindFirstChild("Functional")) or workspace.Functional
-end
-
--- Only one spawn point exists per world, so a new spawn replaces whatever
--- event treadmill is currently active in that world rather than stacking/
--- overlapping with it. Spawns into all 3 worlds at once so an admin-triggered
--- event treadmill is available everywhere, not just World 1's hub.
+-- Only one spawn point exists, so a new spawn replaces whatever event
+-- treadmill is currently active rather than stacking/overlapping with it.
 function TreadmillService.SpawnEventTreadmill(name: string, duration: number)
 	local lowerName = name:lower()
 	local template: Model? = nil
@@ -448,38 +443,24 @@ function TreadmillService.SpawnEventTreadmill(name: string, duration: number)
 		return
 	end
 
-	for world = 1, 3 do
-		local spawnPart = eventTreadmillSpawnPart[world]
-		local folder = eventTreadmillFolder[world]
-		if not spawnPart or not folder then
-			warn(`TreadmillService: no EventTreadmillSpawnCFrame for world {world} - skipping event treadmill there`)
-			continue
-		end
-
-		local existing = currentEventTreadmill[world]
-		if existing then
-			existing:Destroy()
-			currentEventTreadmill[world] = nil
-		end
-
-		local clone = template:Clone()
-		clone:PivotTo(spawnPart.CFrame)
-		-- GetServerTimeNow() (not os.time()) so the client's countdown display
-		-- (TreadmillController) can't drift from a client machine's own clock
-		-- being wrong - same synchronized-clock convention ReplicatedTween uses.
-		clone:SetAttribute("ExpiresAt", workspace:GetServerTimeNow() + duration)
-		CollectionService:AddTag(clone, Tags.EVENT_TREADMILL)
-		clone.Parent = folder
-
-		currentEventTreadmill[world] = clone
-
-		task.delay(duration, function()
-			if currentEventTreadmill[world] == clone then
-				currentEventTreadmill[world] = nil
-				clone:Destroy()
-			end
-		end)
+	if currentEventTreadmill then
+		currentEventTreadmill:Destroy()
+		currentEventTreadmill = nil
 	end
+
+	local clone = template:Clone()
+	clone:PivotTo(eventTreadmillSpawnPart.CFrame)
+	CollectionService:AddTag(clone, Tags.EVENT_TREADMILL)
+	clone.Parent = eventTreadmillFolder
+
+	currentEventTreadmill = clone
+
+	task.delay(duration, function()
+		if currentEventTreadmill == clone then
+			currentEventTreadmill = nil
+			clone:Destroy()
+		end
+	end)
 end
 
 function TreadmillService.Start()
@@ -496,29 +477,12 @@ function TreadmillService.Start()
 		playerTreadmillsFolder.Parent = workspace.Functional
 	end
 
-	for world = 1, 3 do
-		local functionalRoot = GetTreadmillFunctionalRoot(world)
-
-		-- World1's EventTreadmillSpawnCFrame is a guaranteed part of the base
-		-- template (matches the original unconditional WaitForChild here);
-		-- World2/3 may not have theirs built yet, so wait briefly rather than
-		-- yielding forever and blocking the rest of Start() (the ToggleSpawn
-		-- remote hookup, PlayerRemoving cleanup, and the XP tick loop below).
-		local spawnPart = if world == 1
-			then functionalRoot:WaitForChild("EventTreadmillSpawnCFrame")
-			else functionalRoot:WaitForChild("EventTreadmillSpawnCFrame", 5)
-		if not spawnPart then
-			warn(`TreadmillService: no EventTreadmillSpawnCFrame found for world {world} - event treadmills won't spawn there until it's added`)
-		end
-		eventTreadmillSpawnPart[world] = spawnPart
-
-		local folder = functionalRoot:FindFirstChild("EventTreadmills")
-		if not folder then
-			folder = Instance.new("Folder")
-			folder.Name = "EventTreadmills"
-			folder.Parent = functionalRoot
-		end
-		eventTreadmillFolder[world] = folder
+	eventTreadmillSpawnPart = workspace.Functional:WaitForChild("EventTreadmillSpawnCFrame")
+	eventTreadmillFolder = workspace.Functional:FindFirstChild("EventTreadmills")
+	if not eventTreadmillFolder then
+		eventTreadmillFolder = Instance.new("Folder")
+		eventTreadmillFolder.Name = "EventTreadmills"
+		eventTreadmillFolder.Parent = workspace.Functional
 	end
 
 	Net:Connect("ToggleSpawn", onToggleSpawn)
