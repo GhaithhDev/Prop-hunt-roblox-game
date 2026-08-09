@@ -1,17 +1,4 @@
 return {
-	Wins = {
-		WinAwarded = { Name = "WinAwarded", Type = "Event" },
-		SetAutoWins = { Name = "SetAutoWins", Type = "Event" },  
-	},
-
-	Shrink = {
-		SetCustomSize = { Name = "SetCustomSize", Type = "Event" },
-	},
-
-	Treadmill = {
-		ToggleSpawn = { Name = "ToggleSpawn", Type = "Event" },
-	},
-
 	Notifications = {
 		Notify = { Name = "Notify", Type = "Event" },
 	},
@@ -23,38 +10,8 @@ return {
 	GroupRewards = {
 		GetStatus = { Name = "GetStatus", Type = "Function" },
 		-- Function (not Event) so the client can await completion before
-		-- refreshing status - same reasoning as Rebirth/Inventory's remotes.
+		-- refreshing status.
 		ClaimReward = { Name = "ClaimReward", Type = "Function" },
-	},
-
-	Rebirth = {
-		GetRebirthStatus = { Name = "GetRebirthStatus", Type = "Function" },
-		-- Function (not Event) so the client can await completion before
-		-- refreshing status - same reasoning as Inventory's BuyWithWins/EquipItem.
-		PerformRebirth = { Name = "PerformRebirth", Type = "Function" },
-		RequestSkipRebirth = { Name = "RequestSkipRebirth", Type = "Event" },
-	},
-
-	Teleport = {
-		RequestWinsTeleport = { Name = "RequestWinsTeleport", Type = "Event" },
-		RequestRobuxTeleport = { Name = "RequestRobuxTeleport", Type = "Event" },
-		RequestTeleportToWorld = { Name = "RequestTeleportToWorld", Type = "Event" },
-	},
-
-	Inventory = {
-		GetInventoryStatus = { Name = "GetInventoryStatus", Type = "Function" },
-		-- BuyWithWins/EquipItem are Functions (not Events) so the client can
-		-- await server completion before refreshing status - an Event fired
-		-- right before a status refresh isn't guaranteed to have finished
-		-- processing yet.
-		BuyWithWins = { Name = "BuyWithWins", Type = "Function" },
-		RequestRobuxPurchase = { Name = "RequestRobuxPurchase", Type = "Event" },
-		EquipItem = { Name = "EquipItem", Type = "Function" },
-	},
-
-	Death = {
-		ShowRevivePopup = { Name = "ShowRevivePopup", Type = "Event" },
-		RequestRevive = { Name = "RequestRevive", Type = "Event" },
 	},
 
 	Animations = {
@@ -63,45 +20,7 @@ return {
 		ResumeAnimation = { Name = "ResumeAnimation", Type = "Event" },
 	},
 
-	Shop = {
-		RequestXpBoost = { Name = "RequestXpBoost", Type = "Event" },
-		RequestGamePassPurchase = { Name = "RequestGamePassPurchase", Type = "Event" },
-		-- Function (not Event) so the client can await the answer before
-		-- marking Treadmill tiles owned - same reasoning as Inventory's
-		-- GetInventoryStatus.
-		GetShopStatus = { Name = "GetShopStatus", Type = "Function" },
-		RequestServerBoost = { Name = "RequestServerBoost", Type = "Event" },
-	},
-
-	KeycapSound = {
-		-- Function (not Event) so the client can await completion before
-		-- refreshing the equipped highlight - same reasoning as Inventory's
-		-- EquipItem.
-		EquipKeycapSound = { Name = "EquipKeycapSound", Type = "Function" },
-	},
-
-	Admin = {
-		AdminAction = { Name = "AdminAction", Type = "Event" },
-		AdminAnnouncement = { Name = "AdminAnnouncement", Type = "Event" },
-	},
-
-	PlusPercentShrink = {
-		RequestPlusPercentShrink = { Name = "RequestPlusPercentShrink", Type = "Event" },
-	},
-
-	Zombies = {
-		BossCountdown = { Name = "BossCountdown", Type = "Event" }, -- (bossName: string, secondsLeft: number)
-		BossReleased = { Name = "BossReleased", Type = "Event" }, -- fired once, no payload needed
-	},
-
-	LowGravity = {
-		SetGravity = { Name = "SetGravity", Type = "Event" }, -- (gravity: number)
-	},
-
 	UIEffects = {
 		FlashWhiteScreen = { Name = "FlashWhiteScreen", Type = "Event" },
 	},
-	Events = {
-		AbductionStarted = {Name = "AbductionStarted", Type = "Event"}
-	}
 }
