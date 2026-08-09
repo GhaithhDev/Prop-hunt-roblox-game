@@ -23,4 +23,9 @@ return {
 	UIEffects = {
 		FlashWhiteScreen = { Name = "FlashWhiteScreen", Type = "Event" },
 	},
+
+	Morph = {
+		RequestMorph = { Name = "RequestMorph", Type = "Event" },
+		RequestUnmorph = { Name = "RequestUnmorph", Type = "Event" },
+	},
 }

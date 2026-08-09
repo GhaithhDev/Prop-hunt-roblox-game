@@ -5,7 +5,6 @@ local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local NumberFormat = require(ReplicatedStorage.Shared.Packages.NumberFormat)
 local GroupRewardsConfig = require(ReplicatedStorage.Shared.Configs.GroupRewardsConfig)
 local DataManager = require(ServerScriptService.Server.Data.Manager)
-local LevelService = require(ServerScriptService.Server.Level.LevelService)
 
 local OWNED_CATEGORY = "GroupRewards"
 local REWARD_ID = "GroupJoinLike"
@@ -33,7 +32,7 @@ local function claimReward(player: Player)
 		return
 	end
 
-	LevelService.GrantXp(player, GroupRewardsConfig.XpReward)
+	print("rewarding player the join group reward ".. player.Name )
 	DataManager.SetOwned(player, OWNED_CATEGORY, REWARD_ID, true)
 
 	Net:RemoteEvent("Notify"):FireClient(player, "success", `+{NumberFormat.Format(GroupRewardsConfig.XpReward)} XP! Thanks for joining the group!`)
