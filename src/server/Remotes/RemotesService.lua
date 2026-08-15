@@ -15,6 +15,8 @@ local function registerRemotes(node)
             Net:RemoteEvent(node.Name)
         elseif node.Type == "Function" then
             Net:RemoteFunction(node.Name)
+        elseif node.Type == "UnreliableEvent" then
+            Net:UnreliableRemoteEvent(node.Name)
         end
         return
     end
