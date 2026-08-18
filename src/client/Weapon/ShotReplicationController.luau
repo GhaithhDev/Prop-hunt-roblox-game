@@ -8,12 +8,15 @@
 
 --//Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
 
 --//Configs
 local RemoteConfig = require(ReplicatedStorage.Shared.Configs.RemoteConfig)
+local WeaponConstants = require(ReplicatedStorage.Shared.Configs.WeaponConstants)
 
 --//Packages
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
+local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 
 --//Weapon utility
 local drawRayResults = require(ReplicatedStorage.Shared.Weapon.Utility.drawRayResults)
@@ -21,6 +24,8 @@ local playRandomSoundFromSource = require(ReplicatedStorage.Shared.Weapon.Utilit
 local getAudioTarget = require(ReplicatedStorage.Shared.Weapon.Utility.getAudioTarget)
 
 local castRays = require(ReplicatedStorage.Shared.Weapon.Utility.castRays)
+
+local sfxFolder = SoundService:FindFirstChild("SFX")
 
 local ShotReplicationController = {}
 
@@ -30,6 +35,12 @@ local function onReplicateShotEvent(gun: Tool, position: Vector3, rayResults: { 
 		local handle = gun:FindFirstChild("Handle")
 		local sounds = gun:FindFirstChild("Sounds")
 		local muzzle = gun:FindFirstChild("MuzzleAttachment", true)
+
+		local soundName = gun:GetAttribute(WeaponConstants.SHOOT_SOUND_ATTRIBUTE)
+		local shootSound = soundName and sfxFolder and sfxFolder:FindFirstChild(soundName)
+		if shootSound then
+			SoundUtils.PlayFromPart(shootSound, handle or gun)
+		end
 
 		-- If the gun has a MuzzleAttachment, we'll use that as the laser starting point, otherwise
 		-- default to the gun's pivot position.

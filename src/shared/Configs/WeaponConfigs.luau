@@ -39,6 +39,7 @@ WeaponConfigs.Guns = {
 	-- 	[WeaponConstants.RECOIL_MAX_ATTRIBUTE] = Vector2.new(2, 1),
 	-- 	[WeaponConstants.UNANCHORED_IMPULSE_FORCE_ATTRIBUTE] = 0,
 	-- 	[WeaponConstants.VIEW_MODEL_ATTRIBUTE] = "ExampleGun",
+	-- 	[WeaponConstants.SHOOT_SOUND_ATTRIBUTE] = "ExampleGunShot", -- name of a Sound under SoundService.SFX
 	-- 	[WeaponConstants.AIM_ASSIST_RANGE_ATTRIBUTE] = 100,
 	-- 	[WeaponConstants.AIM_ASSIST_FOV_ATTRIBUTE] = 8,
 	-- 	[WeaponConstants.AIM_ASSIST_FRICTION_STRENGTH_ATTRIBUTE] = 0.5,

@@ -41,6 +41,8 @@ WeaponConstants.AIM_ASSIST_FOV_ATTRIBUTE = "aimAssistFov"
 WeaponConstants.AIM_ASSIST_FRICTION_STRENGTH_ATTRIBUTE = "aimAssistFrictionStrength"
 WeaponConstants.AIM_ASSIST_TRACKING_STRENGTH_ATTRIBUTE = "aimAssistTrackingStrength"
 WeaponConstants.AIM_ASSIST_CENTERING_STRENGTH_ATTRIBUTE = "aimAssistCenteringStrength"
+-- Name of a Sound under SoundService.SFX to clone-and-play on every shot (optional).
+WeaponConstants.SHOOT_SOUND_ATTRIBUTE = "shootSound"
 
 --//Input
 WeaponConstants.KEYBOARD_RELOAD_KEY_CODE = Enum.KeyCode.R

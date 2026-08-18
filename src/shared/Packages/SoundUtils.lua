@@ -66,4 +66,24 @@ function SoundUtils.PlayLocalSound(sourceSound: Sound?)
 	end)
 end
 
+--[[
+	PlayFromPart clones sourceSound and plays it parented to `part`, giving positional
+	audio that follows a moving world part (e.g. a gun's Handle) while preserving the
+	source Sound's own Volume/SoundGroup/RollOff settings - same overlap-safe
+	clone-per-call pattern as the other functions here.
+]]
+function SoundUtils.PlayFromPart(sourceSound: Sound?, part: BasePart)
+	if not sourceSound then
+		return
+	end
+
+	local sound = sourceSound:Clone()
+	sound.Parent = part
+	sound:Play()
+
+	sound.Ended:Once(function()
+		sound:Destroy()
+	end)
+end
+
 return SoundUtils

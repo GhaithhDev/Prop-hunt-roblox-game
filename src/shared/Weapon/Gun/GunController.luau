@@ -13,6 +13,7 @@
 ]]
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
@@ -20,6 +21,7 @@ local WeaponConstants = require(ReplicatedStorage.Shared.Configs.WeaponConstants
 local RemoteConfig = require(ReplicatedStorage.Shared.Configs.RemoteConfig)
 local Net = require(ReplicatedStorage.Shared.Packages.Net)
 local Trove = require(ReplicatedStorage.Shared.Packages.Trove)
+local SoundUtils = require(ReplicatedStorage.Shared.Packages.SoundUtils)
 local AimAssist = require(ReplicatedStorage.Shared.Packages.AimAssist)
 local AimAssistEnum = require(ReplicatedStorage.Shared.Packages.AimAssist.AimAssistEnum)
 
@@ -37,6 +39,16 @@ local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 
 local random = Random.new()
+
+local sfxFolder = SoundService:FindFirstChild("SFX")
+
+local function playShootSound(gun: Tool, part: BasePart)
+	local soundName = gun:GetAttribute(WeaponConstants.SHOOT_SOUND_ATTRIBUTE)
+	local sound = soundName and sfxFolder and sfxFolder:FindFirstChild(soundName)
+	if sound then
+		SoundUtils.PlayFromPart(sound, part)
+	end
+end
 
 local GunController = {}
 GunController.__index = GunController
@@ -111,6 +123,7 @@ function GunController:shoot()
 	self.viewModelController:playShootAnimation()
 	self.characterAnimationController:playShootAnimation()
 	self:recoil()
+	playShootSound(self.gun, self.viewModelController.handle)
 
 	self.ammo -= 1
 
