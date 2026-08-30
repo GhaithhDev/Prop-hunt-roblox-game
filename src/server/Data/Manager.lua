@@ -72,21 +72,6 @@ function Manager.SetupLeaderstats(Player)
 	local Leaderstats = Instance.new("Folder")
 	Leaderstats.Name = "leaderstats"
 	Leaderstats.Parent = Player
-
-	local Wins = Instance.new("NumberValue")
-	Wins.Name = "Wins"
-	Wins.Value = 0
-	Wins.Parent = Leaderstats
-
-	local Shrink = Instance.new("NumberValue")
-	Shrink.Name = "Shrink"
-	Shrink.Value = 0
-	Shrink.Parent = Leaderstats
-
-	local Rebirths = Instance.new("NumberValue")
-	Rebirths.Name = "Rebirths"
-	Rebirths.Value = 0
-	Rebirths.Parent = Leaderstats
 end
 
 function Manager.YieldUntilLoadedOrReleased(Player: Player)

@@ -235,7 +235,12 @@ local function onShootEvent(
 	-- Raycast against static geometry only
 	local rayResults = castRays(player, origin.Position, rayDirections, rayRadius, true)
 
-	-- Validate hits
+	-- Validate hits - hitTarget tracks whether any hit actually landed, so a
+	-- gun with self-damage (e.g. Prop Hunt Seeker guns) only punishes a miss.
+	-- Any hit that lands here is necessarily a legal cross-team hit (same-team
+	-- hits are already rejected by validateTag/canPlayerDamageHumanoid below),
+	-- so "hitTarget" is equivalent to "hit an actual Hider".
+	local hitTarget = false
 	for indexString, taggedHumanoid in tagged do
 		local index = tonumber(indexString)
 		if not index then
@@ -271,9 +276,26 @@ local function onShootEvent(
 
 		taggedHumanoid:TakeDamage(damage)
 		taggedBindable:Fire(player, taggedHumanoid, damage)
+		hitTarget = true
 
 		if taggedHumanoid.Health <= 0 then
 			eliminatedBindable:Fire(player, taggedHumanoid, damage)
+		end
+	end
+
+	-- Self-damage on a miss only (e.g. Prop Hunt Seeker guns - their only
+	-- incoming damage source, since Hiders have no offensive weapon).
+	if not hitTarget then
+		local selfDamage = gun:GetAttribute(WeaponConstants.SELF_DAMAGE_PER_SHOT_ATTRIBUTE)
+		if selfDamage and selfDamage > 0 then
+			local shooterCharacter = player.Character
+			local shooterHumanoid = shooterCharacter and shooterCharacter:FindFirstChildOfClass("Humanoid")
+			if shooterHumanoid and shooterHumanoid.Health > 0 then
+				shooterHumanoid:TakeDamage(selfDamage)
+				if shooterHumanoid.Health <= 0 then
+					eliminatedBindable:Fire(player, shooterHumanoid, selfDamage)
+				end
+			end
 		end
 	end
 

@@ -5,8 +5,21 @@
 
     "ReplicatedStorage": {
       "Shared": {
-        "$path": "src/shared",
-        "$ignoreUnknownInstances": true
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "Hello": { "$path": "src/shared/Hello.luau" },
+        "Configs": { "$path": "src/shared/Configs" },
+        "Modules": { "$path": "src/shared/Modules" },
+        "Packages": { "$path": "src/shared/Packages" },
+        "Utils": { "$path": "src/shared/Utils" },
+        "Weapon": {
+          "$path": "src/shared/Weapon",
+          "$ignoreUnknownInstances": true,
+          "ViewModels": {
+            "$className": "Folder",
+            "$ignoreUnknownInstances": true
+          }
+        }
       }
     },
 

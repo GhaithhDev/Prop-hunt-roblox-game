@@ -25,6 +25,16 @@ local WeaponConstants = require(script.Parent.WeaponConstants)
 local WeaponConfigs = {}
 
 WeaponConfigs.Guns = {
+	-- Round system: Seeker guns self-damage on every shot fired (their only
+	-- incoming-damage source, since Hiders have no offensive weapon) - 5 dmg vs
+	-- 100 default health punishes spamming without making the gun useless.
+	["Test Gun"] = {
+		[WeaponConstants.SELF_DAMAGE_PER_SHOT_ATTRIBUTE] = 5,
+	},
+	["Test Gun2"] = {
+		[WeaponConstants.SELF_DAMAGE_PER_SHOT_ATTRIBUTE] = 5,
+	},
+
 	-- ["Example Gun"] = {
 	-- 	[WeaponConstants.DAMAGE_ATTRIBUTE] = 10,
 	-- 	[WeaponConstants.MAGAZINE_SIZE_ATTRIBUTE] = 30,

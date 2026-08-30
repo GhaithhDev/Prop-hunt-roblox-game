@@ -43,6 +43,9 @@ WeaponConstants.AIM_ASSIST_TRACKING_STRENGTH_ATTRIBUTE = "aimAssistTrackingStren
 WeaponConstants.AIM_ASSIST_CENTERING_STRENGTH_ATTRIBUTE = "aimAssistCenteringStrength"
 -- Name of a Sound under SoundService.SFX to clone-and-play on every shot (optional).
 WeaponConstants.SHOOT_SOUND_ATTRIBUTE = "shootSound"
+-- Damage the shooter takes from their own Humanoid on every shot fired (optional -
+-- e.g. the Prop Hunt Seeker guns, which have no other incoming damage source).
+WeaponConstants.SELF_DAMAGE_PER_SHOT_ATTRIBUTE = "selfDamagePerShot"
 
 --//Input
 WeaponConstants.KEYBOARD_RELOAD_KEY_CODE = Enum.KeyCode.R

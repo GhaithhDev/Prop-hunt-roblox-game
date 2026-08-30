@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local WeaponConstants = require(ReplicatedStorage.Shared.Configs.WeaponConstants)
+local Tags = require(ReplicatedStorage.Shared.Configs.Tags)
 local canPlayerDamageHumanoid = require(script.Parent.canPlayerDamageHumanoid)
 
 export type RayResult = {
@@ -64,9 +65,34 @@ local function castRays(
 			rayResult.normal = raycastResult.Normal
 			rayResult.instance = raycastResult.Instance
 
-			local humanoid = raycastResult.Instance.Parent:FindFirstChildOfClass("Humanoid")
+			-- Walk up ancestors (not just the immediate parent) so hits on nested
+			-- parts - accessory handles, nested models, etc. - still resolve to
+			-- the character's Humanoid. Also track whether the walk passed
+			-- through the attached disguise prop, since a morphed character's
+			-- real body parts stay briefly queryable during the post-damage
+			-- health-tag reveal (Head.CanQuery has to be true for Roblox's own
+			-- name/health tag to render) - a hit on the real body should still
+			-- never deal damage, only a hit on the prop itself.
+			local humanoid: Humanoid?
+			local hitMorphProp = false
+			local ancestor: Instance? = raycastResult.Instance
+			while ancestor and ancestor ~= Workspace do
+				if CollectionService:HasTag(ancestor, Tags.MorphProp) then
+					hitMorphProp = true
+				end
+				humanoid = ancestor:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					break
+				end
+				ancestor = ancestor.Parent
+			end
+
 			if humanoid and canPlayerDamageHumanoid(player, humanoid) then
-				rayResult.taggedHumanoid = humanoid
+				local targetCharacter = humanoid.Parent
+				local isMorphed = targetCharacter and targetCharacter:GetAttribute("IsMorph")
+				if not isMorphed or hitMorphProp then
+					rayResult.taggedHumanoid = humanoid
+				end
 			end
 		end
 

@@ -36,4 +36,9 @@ return {
 		-- other players' shots - a dropped packet just skips one muzzle flash/laser.
 		ReplicateShot = { Name = "ReplicateShot", Type = "UnreliableEvent" },
 	},
+
+	Round = {
+		StatusChanged = { Name = "RoundStatusChanged", Type = "Event" },
+		RequestCurrentStatus = { Name = "RequestCurrentStatus", Type = "Function" },
+	},
 }
